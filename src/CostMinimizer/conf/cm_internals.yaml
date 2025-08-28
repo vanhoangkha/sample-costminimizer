@@ -1,9 +1,10 @@
 internals:
   db_fields_to_update:
-    - version
+    - 'version.version'
     - 'genAI.default_provider'
     - 'genAI.default_provider_region'
     - 'genAI.default_genai_model'
+    - 'results_folder.automatic_configuration_from_file_filename'
   boto:
     default_profile_name: CostMinimizer
     default_profile_role: Admin
@@ -75,6 +76,7 @@ internals:
     user_tag_discovery: user_tag_discovery.k2
     user_tag_values_discovery: user_tag_values_discovery.cur
   results_folder:
+    automatic_configuration_from_file_filename: cm_autoconfig.json
     enable_bucket_for_results: False
     bucket_for_results: aws-athena-query-results-{dummy_value}-us-east-1
   genAI:
@@ -82,4 +84,5 @@ internals:
     default_provider_region: us-east-1
     default_genai_model: anthropic.claude-3-5-sonnet-20240620-v1:0
     inference_profile_arn: 
-  version: 0.0.1
+  version: 
+    version: 0.0.1

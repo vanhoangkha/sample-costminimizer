@@ -270,14 +270,32 @@ class ToolingDatabase:
                 self.add_internals_parameters(parent_key, key, value, self.internals_parameters_table_name)
 
     def update_internals_parameters_table_from_yaml_file(self, data, parent_key='', list_fields_to_update = []):
+        '''
+        This function will add or update an internals parameter in the database
+        The parameter will need to be added or updated in cm_internals.yaml and then
+        added in the db_fields_to_update key as an item to update.
+        '''
+        
         for key, value in data.items():
             if isinstance(value, dict):
-                # Recursively handle nested dictionaries
+                # Recursively handle nested dictionaries (depth of 1 is supported)
                 self.update_internals_parameters_table_from_yaml_file( value, f'{parent_key}.{key}' if parent_key else key, list_fields_to_update)
             else:
-                if (key in list_fields_to_update):
-                    # Insert leaf-level key-value pairs into the SQLite3 table
-                    self.update_internals_parameters(parent_key, key, value, self.internals_parameters_table_name)
+                # ftu = field to update; from cm_internals.yaml db_fields_to_update
+                for ftu_key in list_fields_to_update:
+                    parent_ftu_key = ftu_key.split('.')[0]
+                    child_ftu_key = ftu_key.split('.')[1]
+                    if key == child_ftu_key and parent_key.split('.')[1] == parent_ftu_key:
+                        # Insert leaf-level key-value pairs into the SQLite3 table
+                        try:
+                            #check if the key exists in the database; this will error if not; if so use the update method
+                            self.fetch_internals_parameters_table()[parent_key.split('.')[0]][parent_key.split('.')[1]][key]
+                            self.update_internals_parameters(parent_key, child_ftu_key, value, self.internals_parameters_table_name)
+                        except:
+                            #if not exists in database, add it
+                            self.add_internals_parameters(parent_key, child_ftu_key, value, self.internals_parameters_table_name)    
+                        
+                        
 
     def add_internals_parameters(self, parent_key, key, value, table_name):
         try:
