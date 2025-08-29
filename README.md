@@ -118,13 +118,17 @@ Optionally, you may create a json file named cm_autoconfig in the report output 
 For example if you know your CUR database name, table name and bucket information, you may specify it in this file like so: 
 
 ```
-cat > ~/cow/cm_autoconfig.json << 'EOF'
+# Get the current AWS account number dynamically
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+# next is the configuration json file to auto configure the tooling, this is the CUR definition for the workshop studio
+cat > ~/cow/cm_autoconfig.json << EOF
 {
   "cur_region": "us-east-1",
   "cur_db": "cur-database",
-  "cur_table": "raw_cur_data"
-  "aws_cow_s3_bucket": "s3://aws-athena-query-results-111222333444-us-east-1/",
-  "cur_s3_bucket": "s3://aws-athena-query-results-111222333444-us-east-1/"
+  "cur_table": "raw_cur_data",
+  "aws_cow_s3_bucket": "s3://aws-athena-query-results-${AWS_ACCOUNT_ID}-us-east-1/",
+  "cur_s3_bucket": "s3://aws-athena-query-results-${AWS_ACCOUNT_ID}-us-east-1/"
 }
 EOF
 ```
