@@ -680,7 +680,7 @@ class ConfigureToolingCommand:
                     dictionary[key] = new_value  # Replace with your specific update operation
         return dictionary
 
-    def automated_cow_internals_parameters(self) -> dict():
+    def automated_cow_internals_parameters(self) -> dict:
         
         new_dict = self.update_values_recursive(self.appConfig.internals)
         
