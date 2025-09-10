@@ -163,7 +163,7 @@ class ConfigureToolingCommand:
             "cur_db",
             "cur_table",
             "cur_region",
-            "aws_cow_s3_bucket",
+            "cur_s3_bucket",
             "ses_send",
             "ses_from",
             "ses_region",
@@ -179,7 +179,7 @@ class ConfigureToolingCommand:
             "last_month_only",
             "aws_access_key_id",
             "aws_secret_access_key",
-            "cur_s3_bucket"
+            "aws_cow_s3_bucket"
             ]
         
         aws_account_data = panda.DataFrame( [l_headers[1:]])

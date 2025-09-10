@@ -172,11 +172,16 @@ class Config(Singleton):
     def  _cleanup_log_file(cls, log_file_path: Path) -> None:
         if log_file_path.is_file():
             try:
-                os.remove(log_file_path.resolve()) #
+                os.remove(log_file_path.resolve())
             except FileNotFoundError as r:
                 cls.logger.info(f"Failed to remove log file: {r}")
-            except:
-                raise
+            except PermissionError as e:
+                # On Windows, file might be locked by another process
+                # Just continue without removing the file
+                pass
+            except Exception as e:
+                # For any other exception, just continue without removing
+                pass
     
     def _setup_report_time(cls) -> None:
         cls.start = datetime.now()
@@ -399,7 +404,7 @@ internals:
             cls.config['cur_db'] = db_config[0][7]
             cls.config['cur_table'] = db_config[0][8]
             cls.config['cur_region'] = db_config[0][9]
-            cls.config['aws_cow_s3_bucket'] = db_config[0][10]
+            cls.config['cur_s3_bucket'] = db_config[0][10]
             cls.config['ses_send'] = db_config[0][11]
             cls.config['ses_from'] = db_config[0][12]
             cls.config['ses_region'] = db_config[0][13]
@@ -415,7 +420,7 @@ internals:
             cls.config['last_month_only'] = db_config[0][23]
             cls.config['aws_access_key_id'] = db_config[0][24]
             cls.config['aws_secret_access_key'] = db_config[0][25]
-            cls.config['cur_s3_bucket'] = db_config[0][26]
+            cls.config['aws_cow_s3_bucket'] = db_config[0][26]
     
     def _setup_internals_parameters(cls) -> None:
         '''setup internals parameters from database'''
