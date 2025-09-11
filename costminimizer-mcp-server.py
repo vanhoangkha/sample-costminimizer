@@ -56,7 +56,7 @@ async def list_tools() -> list[Tool]:
                         "type": "array",
                         "items": {"type": "string", "enum": ["ce", "ta", "co", "cur"]},
                         "description": "Report types: ce (Cost Explorer), ta (Trusted Advisor), co (Compute Optimizer), cur (Cost & Usage Report)",
-                        "default": ["ce", "ta"]
+                        "default": ["ce", "ta", "co", "cur"]
                     },
                     "region": {
                         "type": "string",
@@ -99,6 +99,62 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {}
             }
+        ),
+        Tool(
+            name="get_cost_optimization_ce_recommendations",
+            description="Generate CE (Cost Explorer) comprehensive reports",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "region": {
+                        "type": "string",
+                        "description": "AWS region",
+                        "default": "us-east-1"
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="get_cost_optimization_co_recommendations",
+            description="Generate CO (Compute Optimizer) comprehensive reports",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "region": {
+                        "type": "string",
+                        "description": "AWS region for Compute Optimizer reports",
+                        "default": "us-east-1"
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="get_cost_optimization_ta_recommendations",
+            description="Generate TA (Trusted Advisor) comprehensive reports",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "region": {
+                        "type": "string",
+                        "description": "AWS region",
+                        "default": "us-east-1"
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="get_cost_optimization_cur_recommendations",
+            description="Generate CUR (Cost & Usage Report) comprehensive reports",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "region": {
+                        "type": "string",
+                        "description": "AWS region",
+                        "default": "us-east-1"
+                    }
+                }
+            }
         )
     ]
 
@@ -108,7 +164,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     logger.info(f"Starting tool execution: {name}")
     try:
         if name == "get_cost_optimization_recommendations":
-            reports = arguments.get("reports", ["ce", "ta"])
+            reports = arguments.get("reports", ["ce", "ta", "co", "cur"])
             region = arguments.get("region", "us-east-1")
             
             logger.info(f"Generating reports: {reports} in region: {region}")
@@ -215,6 +271,70 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             response += "\n💡 Usage tip: Use 'get_cost_optimization_recommendations' with the report codes you want to generate."
             
             return [TextContent(type="text", text=response)]
+        
+        elif name == "get_cost_optimization_ce_recommendations":
+            region = arguments.get("region", "us-east-1")
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, tools.execute_reports, ["ce"], region
+            )
+            
+            if result["success"]:
+                response = f"✅ Cost Explorer analysis completed!\n\n"
+                response += f"📊 Report generated: CE (Cost Explorer)\n"
+                response += f"📁 Output location: {result['output_folder']}\n\n"
+                response += "📋 Report includes:\n"
+                response += "• Cost Explorer - Analyze spending patterns, trends, and Reserved Instance utilization\n"
+                return [TextContent(type="text", text=response)]
+            else:
+                return [TextContent(type="text", text=f"❌ Error generating CE report: {result['error']}")]
+        
+        elif name == "get_cost_optimization_co_recommendations":
+            region = arguments.get("region", "us-east-1")
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, tools.execute_reports, ["co"], region
+            )
+            
+            if result["success"]:
+                response = f"✅ Compute Optimizer analysis completed!\n\n"
+                response += f"📊 Report generated: CO (Compute Optimizer)\n"
+                response += f"📁 Output location: {result['output_folder']}\n\n"
+                response += "📋 Report includes:\n"
+                response += "• Compute Optimizer - Get rightsizing recommendations for EC2, EBS, Lambda\n"
+                return [TextContent(type="text", text=response)]
+            else:
+                return [TextContent(type="text", text=f"❌ Error generating CO report: {result['error']}")]
+        
+        elif name == "get_cost_optimization_ta_recommendations":
+            region = arguments.get("region", "us-east-1")
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, tools.execute_reports, ["ta"], region
+            )
+            
+            if result["success"]:
+                response = f"✅ Trusted Advisor analysis completed!\n\n"
+                response += f"📊 Report generated: TA (Trusted Advisor)\n"
+                response += f"📁 Output location: {result['output_folder']}\n\n"
+                response += "📋 Report includes:\n"
+                response += "• Trusted Advisor - Get AWS best practice recommendations for cost optimization\n"
+                return [TextContent(type="text", text=response)]
+            else:
+                return [TextContent(type="text", text=f"❌ Error generating TA report: {result['error']}")]
+        
+        elif name == "get_cost_optimization_cur_recommendations":
+            region = arguments.get("region", "us-east-1")
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, tools.execute_reports, ["cur"], region
+            )
+            
+            if result["success"]:
+                response = f"✅ Cost & Usage Report analysis completed!\n\n"
+                response += f"📊 Report generated: CUR (Cost & Usage Report)\n"
+                response += f"📁 Output location: {result['output_folder']}\n\n"
+                response += "📋 Report includes:\n"
+                response += "• Cost & Usage Report - Detailed billing analysis with custom queries\n"
+                return [TextContent(type="text", text=response)]
+            else:
+                return [TextContent(type="text", text=f"❌ Error generating CUR report: {result['error']}")]
         
         else:
             return [TextContent(type="text", text=f"❌ Unknown tool: {name}")]
