@@ -421,7 +421,19 @@ internals:
             cls.config['aws_access_key_id'] = db_config[0][24]
             cls.config['aws_secret_access_key'] = db_config[0][25]
             cls.config['aws_cow_s3_bucket'] = db_config[0][26]
-    
+        # Verify if the cls.config['cur_s3_bucket'] is a valid s3 bucket for athena
+        if cls.config['cur_s3_bucket'] is not None:
+            if not cls.config['cur_s3_bucket'].startswith('s3://'):
+                cls.config['cur_s3_bucket'] = 's3://' + cls.config['cur_s3_bucket']
+            if not cls.config['cur_s3_bucket'].endswith('/'):
+                cls.config['cur_s3_bucket'] = cls.config['cur_s3_bucket'] + '/'
+        # Verify if the cls.config['aws_cow_s3_bucket'] is a valid s3 bucket for athena
+        if cls.config['aws_cow_s3_bucket'] is not None:
+            if not cls.config['aws_cow_s3_bucket'].startswith('s3://'):
+                cls.config['aws_cow_s3_bucket'] = 's3://' + cls.config['aws_cow_s3_bucket']
+            if not cls.config['aws_cow_s3_bucket'].endswith('/'):
+                cls.config['aws_cow_s3_bucket'] = cls.config['aws_cow_s3_bucket'] + '/'
+
     def _setup_internals_parameters(cls) -> None:
         '''setup internals parameters from database'''
 
