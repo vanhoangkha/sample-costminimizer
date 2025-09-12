@@ -11,6 +11,7 @@ The tool combines data from multiple AWS cost management services to provide a h
 - Support for custom cost allocation tags and filtering
 - Secure credential management and encryption capabilities
 - Interactive CLI interface with configurable options
+- Model Context Protocol (MCP) server integration for AI assistants
 
 ## Repository Structure
 ```
@@ -257,6 +258,71 @@ CostMinimizer --cur --cur --cur-db customer_cur_data --cur-table cur_00006582261
 # Ask a specific question about costs
 CostMinimizer -q "based on the CostMinimizer.xlsx results provided in attached file, in the Accounts tab of the excel sheets, what is the cost of my AWS service for the year 2024 for the account named slepe000@amazon.com ?" -f "C:\Users\slepe000\cow\000538328000\000538328000-2025-04-03-11-08\CostMinimizer.xlsx"
 ```
+
+## MCP (Model Context Protocol) Integration
+
+CostMinimizer now supports MCP server integration, allowing AI assistants like Claude Desktop to directly access AWS cost optimization tools and data.
+
+### MCP Server Setup
+
+1. **Create MCP Configuration File**
+   Create a `costminimizer-mcp-config.json` file with your AWS credentials:
+   ```json
+   {
+     "mcpServers": {
+       "costminimizer": {
+         "command": "/path/to/start-costminimizer-mcp-server.sh",
+         "env": {
+           "AWS_ACCESS_KEY_ID": "your-access-key",
+           "AWS_SECRET_ACCESS_KEY": "your-secret-key",
+           "AWS_SESSION_TOKEN": "your-session-token"
+         },
+         "disabled": false,
+         "autoApprove": []
+       }
+     }
+   }
+   ```
+
+2. **Start MCP Server**
+   The MCP server provides the following tools to AI assistants:
+   - **cost-explorer**: Retrieve AWS cost and usage data
+   - **cost-optimization**: Get cost optimization recommendations
+   - **compute-optimizer**: Access performance optimization recommendations
+   - **budgets**: Monitor budget status and alerts
+   - **cost-anomaly**: Detect unusual spending patterns
+   - **aws-pricing**: Query AWS service pricing information
+   - **storage-lens**: Analyze S3 storage metrics
+   - **ri-performance**: Monitor Reserved Instance utilization
+   - **sp-performance**: Track Savings Plans performance
+   - **free-tier-usage**: Check Free Tier usage limits
+
+3. **Integration with AI Assistants**
+   Once configured, AI assistants can:
+   - Query your AWS costs directly
+   - Generate optimization recommendations
+   - Analyze spending patterns
+   - Provide budget alerts
+   - Answer complex cost-related questions
+
+### MCP Usage Examples
+
+With MCP integration, you can ask AI assistants questions like:
+- "What are my top 5 AWS services by cost this month?"
+- "Show me cost optimization recommendations for EC2 instances"
+- "Are there any cost anomalies in my account?"
+- "What's my Reserved Instance utilization rate?"
+- "How much of my Free Tier am I using?"
+
+### MCP Benefits
+
+- **Natural Language Queries**: Ask cost questions in plain English
+- **Real-time Data**: Access live AWS cost and usage information
+- **Automated Analysis**: Get AI-powered insights and recommendations
+- **Interactive Exploration**: Drill down into cost data conversationally
+- **Multi-tool Integration**: Combine data from multiple AWS cost services
+
+**Note**: Ensure your AWS credentials have the required permissions listed in the IAM Permissions section below.
 
 
 #### Troubleshooting

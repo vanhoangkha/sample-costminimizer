@@ -1,12 +1,14 @@
 {
   "mcpServers": {
     "costminimizer": {
-      "command": "C:\\Users\\slepetre\\workspace\\sample-costminimizer\\start-costminimizer-mcp-server.sh",
-      "args": [],
-      "cwd": "c:\\Users\\slepetre\\workspace\\CostMinimizer",
+      "command": "/mnt/c/Users/slepetre/workspace/CostMinimizer/start-costminimizer-mcp-server.sh",
       "env": {
-        "PYTHONPATH": "src"
-      }
+        "AWS_ACCESS_KEY_ID": "1111222233334444"
+        "AWS_SECRET_ACCESS_KEY": "11112222333344441111222233334444"
+        "AWS_SESSION_TOKEN": "11112222333344441111222233334444111122223333444411112222333344441111222233334444111122223333444411112222333344441111222233334444"
+      },
+      "disabled": false,
+      "autoApprove": []
     }
   }
 }

@@ -37,11 +37,11 @@ This guide explains how to set up CostMinimizer as an MCP (Model Context Protoco
    
    For macOS/Linux:
    ```bash
-   # Create Amazon Q MCP config directory if it doesn't exist
-   mkdir -p ~/.amazonq/mcp
+   # Check that Amazon Q MCP config directory exist
+   cd ~/.aws/amazonq/
    
    # Copy the MCP configuration
-   cp costminimizer-mcp-config.json ~/.amazonq/mcp/costminimizer.json
+   cp costminimizer-mcp-config.json ~/.aws/amazonq/mcp.json
    ```
 
 2. **Update the configuration file with your actual path:**
