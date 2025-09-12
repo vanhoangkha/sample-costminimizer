@@ -36,7 +36,8 @@ class AccountDiscoveryController:
 
                 # show progress bar based on evolution of self.accounts_metadate
                 display_msg = f'[green]Running accounts discovery in regions[/green]'
-                for a in track(self.accounts_metadata, description=display_msg):
+                iterator = track(self.accounts_metadata, description=display_msg) if self.appConfig.mode != 'cli' else self.accounts_metadata
+                for a in iterator:
                     account = a['Id']
 
                     try:

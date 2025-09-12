@@ -1239,7 +1239,11 @@ class CurBase(ReportBase, ABC):
         # self.minDate and self.maxDate is empty string
         try:
             l_msg = f"Get minDate and maxDate from the CUR table {fqdb_name}, please wait..."
-            self.appConfig.console.print(l_msg)
+            # if appli Mode is CLI
+            if self.appConfig.mode == 'cli':
+                self.appConfig.console.print(l_msg)
+            else:
+                self.appConfig.logger.info(l_msg)
 
             # get minDate and maxDate from the CUR table, used for selection like 1 month records old or 15 days records old
             # If months_back is provided, subtract that many months from the max date
