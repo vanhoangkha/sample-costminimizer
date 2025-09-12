@@ -30,7 +30,7 @@ aws_creds = {
     'AWS_DEFAULT_REGION': os.environ.get('AWS_DEFAULT_REGION'),
     'AWS_PROFILE': os.environ.get('AWS_PROFILE')
 }
-logger.info(f"AWS credentials available: {[k for k, v in aws_creds.items() if v is not None]}")
+logger.info(f"Checked for AWS credential environment variables")
 
 from mcp.server import Server
 from mcp.types import Tool, TextContent
