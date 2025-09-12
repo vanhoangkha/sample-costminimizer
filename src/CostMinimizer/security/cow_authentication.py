@@ -190,7 +190,9 @@ class Authentication:
         try:
             if isinstance(session, boto3.session.Session):
                 self.logger.info(f'Using access key {session.get_credentials().access_key} for session {session.profile_name}')
-                self.appConfig.console.print(f'Using access key [green]{session.get_credentials().access_key}[/green] for session [green]{session.profile_name}[/green]')
+                # if appli Mode is CLI
+                if self.appConfig.mode == 'cli':
+                    self.appConfig.console.print(f'Using access key [green]{session.get_credentials().access_key}[/green] for session [green]{session.profile_name}[/green]')
         except:
             self.logger.info(f'Unable to log access key for session.')
 

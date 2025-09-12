@@ -222,7 +222,9 @@ class CowReportController(CowReportControllerBase):
                 if report_object not in provider.completed_reports:
                     provider_object.completed_reports.append(report_object)
 
-        self.appConfig.console.print(f'[yellow]FETCHING DATA for {len(self.running_report_providers)} type of reports -------------------------------------------------------------------------')
+        # if appli Mode is CLI
+        if self.appConfig.mode == 'cli':
+            self.appConfig.console.print(f'[yellow]FETCHING DATA for {len(self.running_report_providers)} type of reports -------------------------------------------------------------------------')
 
         for provider in self.running_report_providers:
 

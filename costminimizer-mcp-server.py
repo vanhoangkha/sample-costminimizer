@@ -202,8 +202,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 )
             
                 if result["success"]:
-                    response = f"✅ Cost optimization analysis completed!\n\n"
-                    response += f"📊 Reports generated: {', '.join(result['reports_generated'])}\n"
+                    response = f"✅ Cost optimization analysis is ongoing !\n\n"
+                    response += f"📊 Reports to generate: {', '.join(result['reports_generated'])}\n"
                     response += f"📁 Output location: {result['output_folder']}\n\n"
                     response += "📋 Reports include:\n"
                     
@@ -294,8 +294,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.execute_reports(["ce"], region)
             
             if result["success"]:
-                response = f"✅ Cost Explorer analysis completed!\n\n"
-                response += f"📊 Report generated: CE (Cost Explorer)\n"
+                response = f"✅ Cost Explorer analysis is ongoing !\n\n"
+                response += f"📊 Report to generate: CE (Cost Explorer)\n"
                 response += f"📁 Output location: {result['output_folder']}\n\n"
                 response += "📋 Report includes:\n"
                 response += "• Cost Explorer - Analyze spending patterns, trends, and Reserved Instance utilization\n"
@@ -313,8 +313,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.execute_reports(["co"], region)
             
             if result["success"]:
-                response = f"✅ Compute Optimizer analysis completed!\n\n"
-                response += f"📊 Report generated: CO (Compute Optimizer)\n"
+                response = f"✅ Compute Optimizer analysis is ongoing !\n\n"
+                response += f"📊 Report to generate: CO (Compute Optimizer)\n"
                 response += f"📁 Output location: {result['output_folder']}\n\n"
                 response += "📋 Report includes:\n"
                 response += "• Compute Optimizer - Get rightsizing recommendations for EC2, EBS, Lambda\n"
@@ -332,8 +332,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.execute_reports(["ta"], region)
             
             if result["success"]:
-                response = f"✅ Trusted Advisor analysis completed!\n\n"
-                response += f"📊 Report generated: TA (Trusted Advisor)\n"
+                response = f"✅ Trusted Advisor analysis is ongoing !\n\n"
+                response += f"📊 Report to generate: TA (Trusted Advisor)\n"
                 response += f"📁 Output location: {result['output_folder']}\n\n"
                 response += "📋 Report includes:\n"
                 response += "• Trusted Advisor - Get AWS best practice recommendations for cost optimization\n"
@@ -351,8 +351,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.execute_reports(["cur"], region)
             
             if result["success"]:
-                response = f"✅ Cost & Usage Report analysis completed!\n\n"
-                response += f"📊 Report generated: CUR (Cost & Usage Report)\n"
+                response = f"✅ Cost & Usage Report analysis is ongoing!\n\n"
+                response += f"📊 Report to generate: CUR (Cost & Usage Report)\n"
                 response += f"📁 Output location: {result['output_folder']}\n\n"
                 response += "📋 Report includes:\n"
                 response += "• Cost & Usage Report - Detailed billing analysis with custom queries\n"

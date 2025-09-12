@@ -312,8 +312,11 @@ class ReportOutputExcel(ReportOutputHandlerBase):
         # write report into report output as sheets
         self.create_excel_summary_sheet(self.csv_directory, self.output_filename) #create dummy summary for now #TODO
 
-        msg=f'\n[white]Excel Report Output saved into: [yellow]{self.output_filename}'
-        self.appConfig.console.print(msg)
+        # if appli Mode is CLI
+        if self.appConfig.mode == 'cli':
+            msg=f'\n[white] Excel Report Output saved into: [yellow]{self.output_filename}'
+            self.appConfig.console.print(msg)
+        msg=f'!!! Excel Report Output saved into: {self.output_filename}'
         self.logger.info(msg)
 
         if self.appConfig.arguments_parsed.send_mail:
@@ -352,7 +355,9 @@ class ReportOutputExcel(ReportOutputHandlerBase):
             smtp.close()
 
             self.logger.info('Report sent successfully to: %s', email_address)
-            self.appConfig.console.print(f'\n[blink][yellow]Report sent successfully to: {email_address}')
+            # if appli Mode is CLI
+            if self.appConfig.mode == 'cli':
+                self.appConfig.console.print(f'\n[blink][yellow]Report sent successfully to: {email_address}')
 
         except smtplib.SMTPConnectError:
             self.appConfig.console.print(f"\n[red]ERROR : Failed to connect to SMTP server")
@@ -588,8 +593,9 @@ troubleshooting please see our FAQ at: https://github.com/aws-samples/sample-cos
                         summary_rows.append(row)
 
                         report.generateExcel(writer_summary)
-
-                    self.appConfig.console.print(f"[green]Adding new worksheet in XLS file: [yellow]{report.service_name()} - {report.name()}")
+                    # if appli Mode is CLI
+                    if self.appConfig.mode == 'cli':
+                        self.appConfig.console.print(f"[green]Adding new worksheet in XLS file: [yellow]{report.service_name()} - {report.name()}")
 
                     try:
                         writer= self.create_writer( (output_folder  / report.name()).with_suffix('.xlsx'))
