@@ -80,7 +80,7 @@ class CowReportControllerBase:
             report_providers.remove('__pycache__')
 
         for report_provider in enumerate(report_providers): #log
-            self.logger.info('report_provider: %s = %s', str(report_provider[0]), str(report_provider[1]))
+            self.logger.info('get_report_providers() list: %s = %s', str(report_provider[0]), str(report_provider[1]))
 
         return report_providers
 
@@ -123,7 +123,7 @@ class CowReportControllerBase:
                     else:
                         continue
 
-        self.logger.info('Importing: %s report provider(s) found.', len(providers))
+        self.logger.info('Importing %s report provider(s) : %s', len(providers), str(providers))
 
         return providers
 
@@ -316,6 +316,7 @@ class CowReportController(CowReportControllerBase):
             self.report_providers = self.import_reports()
 
         self.enabled_reports = self.appConfig.reports.get_all_enabled_reports()
+        self.logger.info(f"List of enabled reports = {self.enabled_reports}")
 
         enabled_report_request = { 'enabled_reports': self.enabled_reports }
         self.appConfig.console.status(json.dumps(enabled_report_request))

@@ -55,7 +55,7 @@ class App:
         try:
             clear_cli_terminal(self.appConfig.mode)
 
-            self.logger.info(f'Starting CostMinimizer tool in {self.appConfig.mode} mode')
+            self.logger.info(f'################################## Starting CostMinimizer tool in {self.appConfig.mode} mode ##################################')
 
             #exit if application has not been configured
             if not self.appConfig.validate_database_configuration():

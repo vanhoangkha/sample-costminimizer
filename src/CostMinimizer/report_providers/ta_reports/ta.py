@@ -138,9 +138,8 @@ class TaReports(ReportProviderBase):
 
         return self.reports_in_progress
 
-    def execute_report(self, report_object, display, cached=False):
-
-        def run_query( report_object, display = True):
+    def execute_report(self, report_object, display=True, cached=False):
+        def run_query( report_object, display, report_name):
             try:
 
                 TaQuery = report_object.sql(self.list_ta_checks)
@@ -174,12 +173,9 @@ class TaReports(ReportProviderBase):
         if cached:
             for _ in track(range(1), description=display_msg + ' [yellow]CACHED'):
                 pass
-
         else:
-            if display:
-                run_query(  report_object, True)
-            else:
-                run_query( report_object = False)
+            run_query( report_object, display, report_name)
+        self.logger.error( display_msg)
 
     def fetch_data(self, 
         reports_in_progress:list, 
