@@ -39,7 +39,7 @@ class CostMinimizerMCPServer:
         }
         # Filter out None values
         self.aws_credentials = {k: v for k, v in self.aws_credentials.items() if v is not None}
-        self.logger.info(f"Preserved AWS credentials: {list(self.aws_credentials.keys())}")
+        self.logger.info(f"Preserved AWS credentials")
         
     def _setup_tools(self):
         """Register MCP tools for cost optimization."""
