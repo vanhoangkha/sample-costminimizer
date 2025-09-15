@@ -109,7 +109,21 @@ class ResourceDiscoveryController:
                 cur_provider.setup()
                 self.cur_type = self.determine_cur_report_type(cur_provider)
                 self.precondition_reports_in_progress = cur_provider.run(additional_input_data = 'preconditioned')
+            # Replace the existing exception handling block with this:
             except Exception as e:
-                self.logger.warning(f'Skipping CUR processing due to error: {str(e)}')
-                self.appConfig.console.print('[yellow]Skipping CUR processing due to error - continuing with other providers')
-                self.precondition_reports_in_progress = {'cur_preconditionavginstancecost.cur': False}
+                # Check if only CUR reports are being run
+                only_cur_requested = (hasattr(self.appConfig, 'arguments_parsed') and 
+                                    self.appConfig.arguments_parsed.cur and 
+                                    not self.appConfig.arguments_parsed.ce and 
+                                    not self.appConfig.arguments_parsed.ta and 
+                                    not self.appConfig.arguments_parsed.co)
+                
+                if only_cur_requested:
+                    # If only CUR is requested, stop execution and display error
+                    raise Exception(f'CUR processing failed: {str(e)}. Please verify the tooling configuration!')
+                else:
+                    # If other providers are also requested, continue with warning
+                    self.logger.warning(f'Skipping CUR processing due to error: {str(e)}')
+                    self.appConfig.console.print(f'[yellow]Skipping CUR processing due to error - continuing with other providers - {str(e)}')
+                    self.precondition_reports_in_progress = {'cur_preconditionavginstancecost.cur': False}
+
