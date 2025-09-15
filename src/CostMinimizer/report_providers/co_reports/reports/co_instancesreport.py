@@ -153,13 +153,15 @@ class CoInstancesreport(CoBase):
         
         # Create EC2 client to get instance details
         # Create boto3 EC2 client 
-        ec2_client = self.appConfig.get_client('ec2', region_name=region[0])
+        ec2_client = self.appConfig.get_client('ec2', region_name=region)
 
         if display:
             display_msg = f'[green]Running Compute Optimizer Report: {report_name} / {region}[/green]'
         else:
             display_msg = ''
-        for recommendation in track(recommendation_list, description=display_msg):
+
+        iterator = track(recommendation_list, description=display_msg) if self.appConfig.mode == 'cli' else recommendation_list
+        for recommendation in iterator:
                 data_dict = {}
                 data_dict['accountId'] = recommendation['accountId']
                 data_dict['region'] = recommendation['instanceArn'].split(':')[3]

@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "cow_customerdefinition" (
 	"last_used_time"	datetime,
 	"aws_profile"	varchar(256) NOT NULL,
 	"secrets_aws_profile"	varchar(256) NOT NULL,
-	"athena_s3_buckt"	varchar(256) NOT NULL,
+	"athena_s3_bucket"	varchar(256) NOT NULL,
 	"cur_db_name"	varchar(256) NOT NULL,
 	"cur_db_table"	varchar(256) NOT NULL,
 	"cur_region"	varchar(256) NOT NULL,

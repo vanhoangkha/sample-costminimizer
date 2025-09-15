@@ -69,7 +69,9 @@ class ResourceDiscoveryController:
         # from the list of columns names, verify if line_item_resource_id exists
         self.resource_id_column_exists = self.check_column_exists( result, 'line_item_resource_id')
         self.logger.info(f'Using Athena, verify if line_item_resource_id exists: {self.resource_id_column_exists}')
-        self.appConfig.console.print(f'Is line_item_resource_id columns is present in the CUR table ? {self.resource_id_column_exists}')
+        # if appli Mode is CLI
+        if self.appConfig.mode == 'cli':
+            self.appConfig.console.print(f'Is line_item_resource_id columns is present in the CUR table ? {self.resource_id_column_exists}')
 
         # scan result to descover the type of CUR
         l_type_of_CUR = 'Unknown'
@@ -85,7 +87,9 @@ class ResourceDiscoveryController:
                 break
         
         self.logger.info(f'Using Athena, get the type of CUR: {l_type_of_CUR}')
-        self.appConfig.console.print(f'Reading Athena, the type of CUR is: {l_type_of_CUR}')
+        # if appli Mode is CLI
+        if self.appConfig.mode == 'cli':
+            self.appConfig.console.print(f'Reading Athena, the type of CUR is: {l_type_of_CUR}')
         return l_type_of_CUR
 
 
@@ -99,11 +103,27 @@ class ResourceDiscoveryController:
         if 'cur_reports' in providers:
             try:
                 cur_provider = report_controller.import_provider('cur_reports')(self.appConfig)
-                self.appConfig.console.print('[green]Running Cost & Usage Report: Resource Discovery (Precondition) Reports')
+                # if appli Mode is CLI
+                if self.appConfig.mode == 'cli':
+                    self.appConfig.console.print('[green]Running Cost & Usage Report: Resource Discovery (Precondition) Reports')
                 cur_provider.setup()
                 self.cur_type = self.determine_cur_report_type(cur_provider)
                 self.precondition_reports_in_progress = cur_provider.run(additional_input_data = 'preconditioned')
+            # Replace the existing exception handling block with this:
             except Exception as e:
-                self.logger.warning(f'Skipping CUR processing due to error: {str(e)}')
-                self.appConfig.console.print('[yellow]Skipping CUR processing due to error - continuing with other providers')
-                self.precondition_reports_in_progress = {'cur_preconditionavginstancecost.cur': False}
+                # Check if only CUR reports are being run
+                only_cur_requested = (hasattr(self.appConfig, 'arguments_parsed') and 
+                                    self.appConfig.arguments_parsed.cur and 
+                                    not self.appConfig.arguments_parsed.ce and 
+                                    not self.appConfig.arguments_parsed.ta and 
+                                    not self.appConfig.arguments_parsed.co)
+                
+                if only_cur_requested:
+                    # If only CUR is requested, stop execution and display error
+                    raise Exception(f'CUR processing failed: {str(e)}. Please verify the tooling configuration!')
+                else:
+                    # If other providers are also requested, continue with warning
+                    self.logger.warning(f'Skipping CUR processing due to error: {str(e)}')
+                    self.appConfig.console.print(f'[yellow]Skipping CUR processing due to error - continuing with other providers - {str(e)}')
+                    self.precondition_reports_in_progress = {'cur_preconditionavginstancecost.cur': False}
+

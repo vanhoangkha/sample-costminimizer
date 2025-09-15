@@ -156,7 +156,7 @@ class CurReports(ReportProviderBase):
 
         return reports
 
-    def execute_report(self, report_object, query, display=True, cached=False):
+    def execute_report(self, report_object, display=True, cached=False):
         def run_query( report_object, display, report_name):
             try:
                 # Start by checking the CUR version (legacy or v2.0)
@@ -192,7 +192,7 @@ class CurReports(ReportProviderBase):
                         report_object.get_list_cols_currency(),
                         report_object.get_group_by(), display, report_name)
 
-                self.logger.info(f'Running CUR query: {report_name} ')
+                self.logger.info(f'Running report_object.addCurReport( {report_name} )')
             except Exception as e:
                 self.logger.error('Exception occured when during execution of CUR query')
                 self.logger.exception(e)
@@ -206,9 +206,9 @@ class CurReports(ReportProviderBase):
         if cached:
             for _ in track(range(1), description=display_msg + ' [yellow]CACHED'):
                 pass
-
         else:
             run_query( report_object, display, report_name)
+        self.logger.info( display_msg)
 
     def fetch_data(self, 
         reports_in_progress:list, 

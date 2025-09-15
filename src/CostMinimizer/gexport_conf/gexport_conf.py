@@ -53,7 +53,7 @@ class CowExportConf:
             "cur_db",
             "cur_table",
             "cur_region",
-            "aws_cow_s3_bucket",
+            "cur_s3_bucket",
             "ses_send",
             "ses_from",
             "ses_region",
@@ -69,7 +69,7 @@ class CowExportConf:
             "last_month_only",
             "aws_access_key_id",
             "aws_secret_access_key",
-            "cur_s3_bucket"
+            "aws_cow_s3_bucket"
         ]
 
         dict_zip = dict(zip(l_headers,aws_account_data[0]))
@@ -113,7 +113,7 @@ class CowExportConf:
                 "last_used_time",
                 "aws_profile",
                 "secrets_aws_profile",
-                "athena_s3_buckt",
+                "athena_s3_bucket",
                 "cur_db_name",
                 "cur_db_table",
                 "cur_region",

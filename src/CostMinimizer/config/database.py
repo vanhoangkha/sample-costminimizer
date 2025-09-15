@@ -207,8 +207,8 @@ class ToolingDatabase:
         if not recordExistsAndNotNull('secrets_aws_profile'):
             record['secrets_aws_profile'] = cow_internals_customer_discovery['secrets_aws_profile'].replace('{dummy_value}', record['cx_name'])
 
-        if not recordExistsAndNotNull('athena_s3_buckt'):
-            record['athena_s3_buckt'] = cow_internals_customer_discovery['aws_cow_s3_bucket'].replace('{dummy_value}', my_account)
+        if not recordExistsAndNotNull('athena_s3_bucket'):
+            record['athena_s3_bucket'] = cow_internals_customer_discovery['aws_cow_s3_bucket'].replace('{dummy_value}', my_account)
 
         if not recordExistsAndNotNull('cur_db_name'):
             record['cur_db_name'] = cow_internals_customer_discovery['db_name']
@@ -335,7 +335,7 @@ class ToolingDatabase:
                 'email_address': email_address,
                 'aws_profile': aws_profile,
                 'secrets_aws_profile': secrets_aws_profile,
-                'athena_s3_buckt': athena_s3_bucket,
+                'athena_s3_bucket': athena_s3_bucket,
                 'cur_db_name': cur_db_name,
                 'cur_db_table': cur_db_table,
                 'cur_region': cur_region,
@@ -387,6 +387,10 @@ class ToolingDatabase:
 
     def update_record(self, request, table_name, where):
         '''function to abstract the update of records into our database'''
+        self.logger.info(f"update_record() : {table_name} - {where} - {request}")
+        # test if request is empty then return
+        if not request:
+            return
         keys = list(request.keys())
         values = list(request.values())
         sql_set = []
@@ -395,7 +399,6 @@ class ToolingDatabase:
             sql_set.append(f"{keys[i]} = ?")
 
         text_sql_set = ','.join(sql_set)
-        self.logger.info(text_sql_set)
 
         cursor = self.con.cursor()
 
@@ -426,7 +429,7 @@ class ToolingDatabase:
             "cur_db"	varchar(99) DEFAULT '',
             "cur_table"	varchar(99) DEFAULT '',
             "cur_region"	varchar(30) DEFAULT '',
-            "aws_cow_s3_bucket"	varchar(100) DEFAULT '{default_s3}',
+            "cur_s3_bucket"	varchar(100) DEFAULT '{default_s3}',
             "ses_send"	varchar(100) DEFAULT '',
             "ses_from"	varchar(100) DEFAULT '',
             "ses_region"	varchar(20) DEFAULT '',
@@ -442,7 +445,7 @@ class ToolingDatabase:
             "last_month_only"	varchar(20) DEFAULT 'FALSE',
             "aws_access_key_id"	varchar(50),
             "aws_secret_access_key"	varchar(50),
-            "cur_s3_bucket"	varchar(255) DEFAULT 's3://{default_s3}',
+            "aws_cow_s3_bucket"	varchar(255) DEFAULT 's3://{default_s3}',
             PRIMARY KEY("config_id" AUTOINCREMENT)
         )'''
 
@@ -457,7 +460,7 @@ class ToolingDatabase:
             "last_used_time"	datetime,
             "aws_profile"	varchar(256) NOT NULL,
             "secrets_aws_profile"	varchar(256) NOT NULL,
-            "athena_s3_buckt"	varchar(256) NOT NULL,
+            "athena_s3_bucket"	varchar(256) NOT NULL,
             "cur_db_name"	varchar(256) NOT NULL,
             "cur_db_table"	varchar(256) NOT NULL,
             "cur_region"	varchar(256) NOT NULL,

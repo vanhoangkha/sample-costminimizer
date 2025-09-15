@@ -151,9 +151,8 @@ class CoReports(ReportProviderBase):
 
         return self.reports_in_progress
 
-    def execute_report(self, report_object, display, cached=False):
-
-        def run_query(report_object, display = False, report_name = ''):
+    def execute_report(self, report_object, display=True, cached=False):
+        def run_query(report_object, display, report_name):
             try:
                 region = self.regions
                 account = self.accounts
@@ -166,7 +165,7 @@ class CoReports(ReportProviderBase):
                             report_object.get_range_categories() , 
                             report_object.get_range_values(),
                             report_object.get_list_cols_currency(),
-                            report_object.get_group_by())
+                            report_object.get_group_by(), display)
 
                 self.logger.info(f'Running Compute Optimizer query: {report_name} ')
             except Exception as e:
@@ -183,13 +182,9 @@ class CoReports(ReportProviderBase):
         if cached:
             for _ in track(range(1), description=display_msg + ' [yellow]CACHED'):
                 pass
-
         else:
-            if display:
-                # execute report for all accounts/regions
-                run_query(report_object, display, report_name)
-            else:
-                run_query(report_object)
+            run_query( report_object, display, report_name)
+        self.logger.error( display_msg)
 
     def fetch_data(self, 
         reports_in_progress:list, 

@@ -80,7 +80,7 @@ class CowReportControllerBase:
             report_providers.remove('__pycache__')
 
         for report_provider in enumerate(report_providers): #log
-            self.logger.info('report_provider: %s = %s', str(report_provider[0]), str(report_provider[1]))
+            self.logger.info('get_report_providers() list: %s = %s', str(report_provider[0]), str(report_provider[1]))
 
         return report_providers
 
@@ -123,7 +123,7 @@ class CowReportControllerBase:
                     else:
                         continue
 
-        self.logger.info('Importing: %s report provider(s) found.', len(providers))
+        self.logger.info('Importing %s report provider(s) : %s', len(providers), str(providers))
 
         return providers
 
@@ -222,7 +222,9 @@ class CowReportController(CowReportControllerBase):
                 if report_object not in provider.completed_reports:
                     provider_object.completed_reports.append(report_object)
 
-        self.appConfig.console.print(f'[yellow]FETCHING DATA for {len(self.running_report_providers)} type of reports -------------------------------------------------------------------------')
+        # if appli Mode is CLI
+        if self.appConfig.mode == 'cli':
+            self.appConfig.console.print(f'[yellow]FETCHING DATA for {len(self.running_report_providers)} type of reports -------------------------------------------------------------------------')
 
         for provider in self.running_report_providers:
 
@@ -316,12 +318,15 @@ class CowReportController(CowReportControllerBase):
             self.report_providers = self.import_reports()
 
         self.enabled_reports = self.appConfig.reports.get_all_enabled_reports()
+        self.logger.info(f"List of enabled reports = {self.enabled_reports}")
 
         enabled_report_request = { 'enabled_reports': self.enabled_reports }
         self.appConfig.console.status(json.dumps(enabled_report_request))
 
         for provider in self.report_providers:
-            self.appConfig.console.print(f"\n[yellow]{provider.long_name(self).ljust(120, '-')}")
+            # if appli Mode is CLI
+            if self.appConfig.mode == 'cli':
+                self.appConfig.console.print(f"\n[yellow]{provider.long_name(self).ljust(120, '-')}")
             self.logger.info('Running report provider: %s', provider.name())
 
             if provider.name() not in self.enabled_reports.values():
@@ -350,7 +355,9 @@ class CowReportController(CowReportControllerBase):
                 continue
 
             #run mandatory reports required for pptx generation. (PowerPoint reports)
-            self.appConfig.console.print(f'\n[green]Running [yellow]PowerPoint reports [green]for [yellow]{p.name()} [green]provider...')
+            # if appli Mode is CLI
+            if self.appConfig.mode == 'cli':
+                self.appConfig.console.print(f'\n[green]Running [yellow]PowerPoint reports [green]for [yellow]{p.name()} [green]provider...')
             p.mandatory_reports(type='base')
             
             #run each providers query logic

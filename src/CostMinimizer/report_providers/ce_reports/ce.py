@@ -147,8 +147,7 @@ class CeReports(ReportProviderBase):
         return self.reports_in_progress
 
     def execute_report(self, report_object, display, cached=False):
-
-        def run_query(report_object):
+        def run_query(report_object, display, report_name):
             try:
 
                 CeQuery = report_object.sql()
@@ -181,13 +180,13 @@ class CeReports(ReportProviderBase):
         report_name = report_object.name()
         
         display_msg = f'[green]Running CostExplorer Report: {report_name} / {self.appConfig.selected_regions}[/green]'
-        
+
         if cached:
             for _ in track(range(1), description=display_msg + ' [yellow]CACHED'):
                 pass
-
         else:
-            run_query(report_object)
+            run_query( report_object, display, report_name)
+        self.logger.info( display_msg)
 
     def fetch_data(self, 
         reports_in_progress:list, 

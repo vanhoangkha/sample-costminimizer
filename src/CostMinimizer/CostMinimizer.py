@@ -36,6 +36,7 @@ class App:
 
         #parse_arguments
         raw_arguments = sys.argv[1:]
+        self.logger.info(f'Starting CostMinimizer with parameters : {raw_arguments}')
         self.appConfig.arguments_parsed = ToolingArguments().command_line_arguments(raw_arguments)
         
         #setup auth manager and authentication
@@ -54,7 +55,7 @@ class App:
         try:
             clear_cli_terminal(self.appConfig.mode)
 
-            self.logger.info(f'Starting CostMinimizer tool in {self.appConfig.mode} mode')
+            self.logger.info(f'################################## Starting CostMinimizer tool in {self.appConfig.mode} mode ##################################')
 
             #exit if application has not been configured
             if not self.appConfig.validate_database_configuration():

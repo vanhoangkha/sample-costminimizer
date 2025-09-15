@@ -35,6 +35,7 @@ class RunToolingRun:
         self.logger = logging.getLogger(__name__)
         self.appInstance = appInstance
         self.appConfig = Config()
+        self.mode = getattr(appInstance, 'mode', 'cli')  # Add mode attribute with default fallback
         
         self.selected_reports = selected_reports
         self.selected_accounts = selected_accounts
@@ -85,30 +86,24 @@ class RunToolingRun:
 
         '''
 
-        if self.appConfig.mode == 'cli':
-            '''
-            In cli/menu mode menu_selected_reports is passed in as a launch_terminal_menu object
-            which needs to be converted to a dict, such as:
-            i.e.: {'ebs_unattached_volumes.k2': True, 'lambda_arm_savings.cur': True}
-            '''
-            if selected_reports is None:
-                # If running from YAML file this will come in as 'None' and that's ok
-                reports=None
-            else:
-                reports = {}
-                for report_line in selected_reports:
-                    report_name = report_line.strip()
+        if selected_reports is None:
+            # If running from YAML file this will come in as 'None' and that's ok
+            reports=None
+        else:
+            reports = {}
+            for report_line in selected_reports:
+                report_name = report_line.strip()
 
-                    sql = f"select report_name, report_provider from cow_availablereports WHERE report_name = '{report_name}'"
-                    try:
-                        result = self.appConfig.database.select_records(sql, rows="one")
-                        report = result[0]
-                        report_provider = result[1]
-                        reports[f'{report}.{report_provider}'] = True
-                    except Exception as e:
-                        ErrorInReportDiscovery(f'Unable to pull report name {report_name} from the sqllite database.')
+                sql = f"select report_name, report_provider from cow_availablereports WHERE report_name = '{report_name}'"
+                try:
+                    result = self.appConfig.database.select_records(sql, rows="one")
+                    report = result[0]
+                    report_provider = result[1]
+                    reports[f'{report}.{report_provider}'] = True
+                except Exception as e:
+                    ErrorInReportDiscovery(f'Unable to pull report name {report_name} from the sqllite database.')
 
-            self.appConfig.customers, self.appConfig.reports = self.report_request_parse(reports)
+        self.appConfig.customers, self.appConfig.reports = self.report_request_parse(reports)
 
     def set_report_request(self, menu_selected_reports) -> None:
         '''
@@ -476,7 +471,7 @@ class RunToolingRun:
                 reports_from_menu=parsed_reports_from_menu
                 )
 
-            self.logger.info(f'Running in {self.mode} mode: Report data source from {datasource} : {datasource_file}')
+            self.logger.info(f'Running in {self.appConfig.mode} mode: Report data source from {datasource} : {datasource_file}')
             return report_request.get_all_reports()
     
     def set_using_tags_from_arguments(self):
@@ -513,7 +508,10 @@ class RunToolingRun:
         # display message for the user to wait that getting list of preconditionned reports is ongoing
         self.logger.info(f"Getting list of preconditionned reports for the admin account. Please wait...")
         self.appConfig.precondition_reports = ResourceDiscoveryController()
-        self.appConfig.customers, self.appConfig.reports = self.report_request_parse(self.appConfig.precondition_reports.precondition_reports)
+        # Store precondition reports separately to avoid overwriting main reports
+        precondition_customers, precondition_reports = self.report_request_parse(self.appConfig.precondition_reports.precondition_reports)
+        # Temporarily set for precondition execution
+        self.appConfig.customers, self.appConfig.reports = precondition_customers, precondition_reports
         self.appConfig.precondition_reports.run(self.report_controller)
         
         if self.appConfig.mode == 'cli':
@@ -525,31 +523,27 @@ class RunToolingRun:
             if self.appConfig.arguments_parsed.checks:
                 # Use the checks provided via command line
                 if ('ALL' in self.appConfig.arguments_parsed.checks):
-                    l_list_reports =  [i.name(self) for i in self.appConfig.reports]
+                    l_list_reports =  [i.Name for i in self.appConfig.database.get_available_reports()]
                 else:
                     l_list_reports = self.appConfig.arguments_parsed.checks
-                #sef customer and report requests
+                #set customer and report requests
                 self.set_report_request_arguments(l_list_reports)
 
             elif self.appConfig.report_request_mode == 'menu':
                 # Display reports menu - only if report request is not coming from YAML file or GUI
                 menu_selected_reports = self.display_available_reports_menu()
 
-                #sef customer and report requests
+                #set customer and report requests
                 self.set_report_request(menu_selected_reports)
                 
                 clear_cli_terminal(self.appConfig.mode)
-
-            #validate admin account connection 
-            # profile_name = f"{self.appConfig.internals['internals']['boto']['default_profile_name']}_profile"
 
             requires_region_selection = self.check_for_required_region()
 
             #display accounts menu
             selected_accounts = self.display_accounts_menu()
-            
+
             # Check if region selection is required (--co options)
-            #self.appConfig.reports.requires_region_selection() #chris
             if requires_region_selection:
                 self.appConfig.console.print(f"\nRegion selection is required for --co (Compute Optimizer) option.")
             else:
@@ -559,6 +553,7 @@ class RunToolingRun:
             self.appConfig.selected_region = self.appConfig.selected_regions
 
             #run report controller run method
+            self.logger.info(f"CLI mode - Updated enabled reports = {str(self.appConfig.report_classes)}")
             self.report_controller.run()
 
             if self.appConfig.cow_execution_type == 'sync':
@@ -597,6 +592,66 @@ class RunToolingRun:
             self.run_end_of_app(self.cm, self.report_controller, self.completion_time)
 
             #make a copy of the log file in the report directory
+            self.make_log_file_copy(self.report_controller, self.completion_time)
+            
+        elif self.appConfig.mode == 'module':
+            # Module mode execution - similar to CLI but without interactive menus
+            
+            # Use the checks provided via command line arguments
+            if self.appConfig.arguments_parsed.checks:
+                if ('ALL' in self.appConfig.arguments_parsed.checks):
+                    l_list_reports = [i.Name for i in self.appConfig.database.get_available_reports()]
+                else:
+                    l_list_reports = self.appConfig.arguments_parsed.checks
+                # Set customer and report requests - this will overwrite precondition reports
+                self.set_report_request_arguments(l_list_reports)
+                
+                # CRITICAL FIX: Verify that reports were properly updated
+                self.logger.info(f"MODULE mode - After set_report_request_arguments, enabled reports = {self.appConfig.reports.get_all_enabled_reports() if hasattr(self.appConfig, 'reports') and self.appConfig.reports else 'None'}")
+
+            requires_region_selection = self.check_for_required_region()
+            selected_accounts = self.display_accounts_menu()
+            
+            # Set default region for module mode
+            if requires_region_selection:
+                self.appConfig.selected_regions = 'us-east-1'  # Default region for module mode
+            else:
+                self.appConfig.selected_regions = self.appConfig.default_selected_region
+            self.appConfig.selected_region = self.appConfig.selected_regions
+            
+            # CRITICAL FIX: Ensure enabled reports are properly set before running report controller
+            # This prevents precondition reports from overriding the actual requested reports
+            if hasattr(self.appConfig, 'reports') and self.appConfig.reports:
+                self.logger.info(f"MODULE mode - Final enabled reports check = {self.appConfig.reports.get_all_enabled_reports()}")
+            
+            # Run report controller
+            self.logger.info(f"MODULE mode - Updated enabled reports = {str(self.appConfig.report_classes)}")
+            self.report_controller.run()
+            
+            if self.appConfig.cow_execution_type == 'sync':
+                # Fetch data
+                self.report_controller.fetch()
+                
+                # Calculate savings
+                self.report_controller.calculate_savings()
+                
+                # Save reports
+                self.report_controller.get_provider_reports()
+                
+                self.appConfig.end = datetime.now()
+                self.appInstance.end = self.appConfig.end
+                
+                # Run CostOptimizer metrics
+                self.cm = self.run_tooling_metrics(self.report_controller.all_providers_completed_reports)
+            
+            # Generate report output
+            self.completion_time = datetime.now()
+            l_roe = self.run_generate_report_output(self.report_controller, self.completion_time)
+            
+            self.appConfig.end = datetime.now()
+            self.appInstance.end = self.appConfig.end
+            
+            # Make a copy of the log file in the report directory
             self.make_log_file_copy(self.report_controller, self.completion_time)
 
     def run_tooling_metrics(self, completed_reports) -> CowMetrics:
