@@ -1,0 +1,498 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Windows Workstation for CostMinimizer Workshop - Pre-configured Windows instance
+  This template creates a Windows Server 2022 instance with CostMinimizer tools pre-installed.
+  The instance includes Python, Git, VS Code, AWS CLI, and all necessary dependencies.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Security Configuration"
+        Parameters:
+          - KeyPairName
+      - Label:
+          default: "Workshop Configuration"
+        Parameters:
+          - WorkshopStackName
+    ParameterLabels:
+      KeyPairName:
+        default: "EC2 Key Pair Name"
+      WorkshopStackName:
+        default: "Workshop Stack Name"
+
+Parameters:
+  KeyPairName:
+    Type: String
+    Description: |
+      REQUIRED: Amazon EC2 Key Pair name for secure Windows workstation access.
+      
+      IMPORTANT PREREQUISITES:
+      - The key pair MUST exist in your AWS account in the same region as this deployment
+      - Key pairs are region-specific resources managed by AWS KMS for encryption
+    AllowedPattern: '^$|^[a-zA-Z0-9][a-zA-Z0-9\-_]*$'
+    ConstraintDescription: |
+      Key pair name must be empty or contain only alphanumeric characters, hyphens, and underscores.
+      The key pair must already exist in your AWS account.
+    Default: 'keypaircostminimizer'
+  WorkshopStackName:
+    Type: String
+    Default: 'costminimizer-labs-workshop'
+    Description: |
+      Name of the main CostMinimizer workshop infrastructure stack.
+
+Conditions:
+  HasKeyPair:
+    Fn::Not:
+      - Fn::Equals:
+          - Ref: KeyPairName
+          - ''
+
+Resources:
+  # Security Group for Workshop Instances
+  WorkshopSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Security group for workshop instances'
+      VpcId: !Ref 'AWS::NoValue'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          
+  # IAM Role for Amazon EC2 instances
+  WorkshopRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Policies:
+        - PolicyName: CostMinimizerWorkshopPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - support:DescribeTrustedAdvisorChecks
+                  - support:DescribeTrustedAdvisorCheckResult
+                  - support:DescribeTrustedAdvisorCheckSummaries
+                  - support:RefreshTrustedAdvisorCheck
+                  - support:DescribeCases
+                  - support:DescribeSeverityLevels
+                  - support:DescribeCommunications
+                  - support:DescribeServices
+                  - ce:GetCostAndUsage
+                  - ce:GetReservationCoverage
+                  - ce:GetReservationUtilization
+                  - ce:GetReservationPurchaseRecommendation
+                  - ce:GetTags
+                  - athena:StartQueryExecution
+                  - athena:GetQueryExecution
+                  - athena:GetQueryResults
+                  - athena:ListDataCatalogs
+                  - athena:ListDatabases
+                  - athena:ListTableMetadata
+                  - athena:GetTableMetadata
+                  - sts:GetCallerIdentity
+                  - sts:GetSessionToken
+                  - bedrock:InvokeModel
+                  - organizations:DescribeOrganization
+                  - organizations:ListAccounts
+                  - organizations:ListRoots
+                  - organizations:ListOrganizationalUnitsForParent
+                  - organizations:DescribeAccount
+                  - ec2:Describe*
+                  - ec2:List*
+                  - compute-optimizer:Get*
+                Resource: '*'
+
+  # Instance Profile for EC2 instances
+  WorkshopInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref WorkshopRole
+
+  # Pre-configured Windows Server 2022 Instance with .NET Core
+  WindowsInstanceCostMinimizer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c9fb5d338f1eec43  # Windows Server 2022 Base
+      InstanceType: t3.xlarge  # Different size for cost comparison
+      KeyName: !If [HasKeyPair, !Ref KeyPairName, !Ref 'AWS::NoValue']
+      IamInstanceProfile: !Ref WorkshopInstanceProfile
+      SecurityGroupIds:
+        - !GetAtt WorkshopSecurityGroup.GroupId
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 50
+            VolumeType: gp3
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64: |
+          <powershell>
+          # Enable comprehensive logging
+          Start-Transcript -Path "C:\UserDataLog.txt" -Append
+
+          # Set error handling
+          $ErrorActionPreference = "Continue"
+
+          Write-Host "Starting EC2 User Data Script Execution at $(Get-Date)"
+
+          # Show persistent notification to User Administrator
+          msg Administrator "Cost Minimizer initialization in progress: Please wait approximately 13 minutes after boot to complete. Consult C:\UserDataLog.txt to check if it has finished !"
+
+          # Wait for network connectivity
+          Write-Host "Waiting for network connectivity..."
+          do {
+              Start-Sleep -Seconds 5
+              $ping = Test-NetConnection -ComputerName "8.8.8.8" -Port 53 -InformationLevel Quiet
+          } while (-not $ping)
+          Write-Host "Network connectivity confirmed"
+
+          # Install Chocolatey as package manager
+          Write-Host "Installing Chocolatey..."
+          try {
+              Set-ExecutionPolicy Bypass -Scope Process -Force
+              [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+              Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+              $env:PATH = "$env:ProgramData\chocolatey\bin;$env:PATH"
+              Write-Host "Chocolatey installed successfully"
+          }
+          catch {
+              Write-Host "Chocolatey installation failed: $($_.Exception.Message)"
+              Write-Host "Continuing without Chocolatey..."
+          }
+
+          # Function to install packages with Chocolatey
+          function Install-ChocoPackage {
+              param($PackageName, $MaxRetries = 3)
+
+              $retryCount = 0
+              do {
+                  try {
+                      Write-Host "Installing $PackageName (attempt $($retryCount + 1))..."
+                      choco install $PackageName -y --no-progress
+                      Write-Host "$PackageName installed successfully"
+                      return $true
+                  }
+                  catch {
+                      $retryCount++
+                      Write-Host "$PackageName installation attempt $retryCount failed: $($_.Exception.Message)"
+                      
+                      if ($retryCount -ge $MaxRetries) {
+                          Write-Host "Failed to install $PackageName after $MaxRetries attempts"
+                          return $false
+                      }
+                      Start-Sleep -Seconds 30
+                  }
+              } while ($retryCount -lt $MaxRetries)
+          }
+
+          # Install packages using Chocolatey
+          $packages = @(
+              "python",
+              "git",
+              "vscode",
+              "dotnet-sdk",
+              "awscli",
+              "uv"
+          )
+
+          foreach ($package in $packages) {
+              Write-Host "Starting installation of $package..."
+              $success = Install-ChocoPackage -PackageName $package
+              if (-not $success) {
+                  Write-Host "Warning: $package installation failed, continuing with next package"
+              }
+              Start-Sleep -Seconds 5
+          }
+
+          # Refresh PATH environment variable
+          Write-Host "Refreshing environment variables..."
+          $machinePath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+          $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+          $gitPath = "C:\Program Files\Git\bin"
+          $env:Path = "$machinePath;$userPath;$gitPath"
+          [Environment]::SetEnvironmentVariable("PATH", $env:Path, "Process")
+
+          # Wait for installations to complete
+          Start-Sleep -Seconds 30
+
+          # Install Q Chat with retry
+          Write-Host "Installing Q Chat..."
+          $retryCount = 0
+          do {
+              try {
+                  python -m pip install --upgrade pip --quiet
+                  python -m pip install qchat --quiet
+                  Write-Host "Q Chat installed successfully"
+                  break
+              }
+              catch {
+                  $retryCount++
+                  Write-Host "Q Chat installation attempt $retryCount failed"
+                  if ($retryCount -ge 3) {
+                      Write-Host "Failed to install Q Chat after 3 attempts"
+                      break
+                  }
+                  Start-Sleep -Seconds 30
+              }
+          } while ($retryCount -lt 3)
+
+          # Configure AWS CLI
+          Write-Host "Configuring AWS CLI..."
+          try {
+              aws configure set region us-east-1
+              Write-Host "AWS CLI configured successfully"
+          }
+          catch {
+              Write-Host "AWS CLI configuration failed"
+          }
+
+          # Create desktop shortcuts for Administrator user
+          Write-Host "Creating desktop shortcuts..."
+          try {
+              $WshShell = New-Object -comObject WScript.Shell
+              $desktopPath = "C:\Users\Administrator\Desktop"
+              if (-not (Test-Path $desktopPath)) {
+                  New-Item -ItemType Directory -Path $desktopPath -Force
+              }
+
+              $Shortcut = $WshShell.CreateShortcut("$desktopPath\Visual Studio Code.lnk")
+              $Shortcut.TargetPath = "C:\Program Files\Microsoft VS Code\Code.exe"
+              $Shortcut.Save()
+
+              Write-Host "Desktop shortcuts created successfully"
+          }
+          catch {
+              Write-Host "Failed to create desktop shortcuts"
+          }
+
+          # Create workshop directory and setup CostMinimizer
+          Write-Host "Setting up CostMinimizer..."
+          try {
+              New-Item -ItemType Directory -Path "C:\workshop" -Force
+              Set-Location "C:\workshop"
+
+              # Clone repository with retry
+              $retryCount = 0
+              do {
+                  try {
+                      git clone https://github.com/aws-samples/sample-costminimizer.git
+                      Write-Host "CostMinimizer Repository cloned successfully"
+                      break
+                  }
+                  catch {
+                      $retryCount++
+                      Write-Host "Git clone attempt $retryCount failed"
+                      if ($retryCount -ge 3) {
+                          Write-Host "Failed to clone repository after 3 attempts"
+                          break
+                      }
+                      Start-Sleep -Seconds 30
+                  }
+              } while ($retryCount -lt 3)
+
+              if (Test-Path "sample-costminimizer") {
+                  Set-Location "sample-costminimizer"
+
+                  # Setup Python virtual environment
+                  Write-Host "Setting up Python virtual environment..."
+                  python -m venv .venv
+
+                  # Activate virtual environment
+                  & .\.venv\Scripts\Activate.ps1
+
+                  # Install dependencies
+                  Write-Host "Installing Python dependencies..."
+                  python -m pip install --upgrade pip --quiet
+                  if (Test-Path "requirements.txt") {
+                      pip install -r requirements.txt --quiet
+                  }
+
+                  # Setup development version
+                  Write-Host "Setting up CostMinimizer development version..."
+                  if (Test-Path "setup.py") {
+                      python setup.py develop
+                  }
+
+                  # Setup auto config json file version
+                  Write-Host "Setting up cm_autoconfig.json auto config json file..."
+
+                  # Get the current AWS account number dynamically
+                  $AWS_ACCOUNT_ID = aws sts get-caller-identity --query Account --output text
+
+                  # test if folder C:\Windows\system32\config\systemprofile\cow, else create Item
+                  if (-not (Test-Path "C:\Windows\system32\config\systemprofile\cow")) {
+                      New-Item -ItemType Directory -Path "C:\Windows\system32\config\systemprofile\cow" -Force
+                  }
+
+                  $config = @{
+                      cur_region = "us-east-1"
+                      cur_db = "cur-database"
+                      cur_table = "raw_cur_data"
+                      aws_cow_s3_bucket = "aws-athena-query-results-$AWS_ACCOUNT_ID-us-east-1"
+                      cur_s3_bucket = "s3://aws-athena-query-results-$AWS_ACCOUNT_ID-us-east-1/"
+                  }
+                  $config | ConvertTo-Json | Out-File -FilePath "C:\Windows\system32\config\systemprofile\cow\cm_autoconfig.json" -Encoding ASCII
+
+                  # Also creation of config file in  C:\Users\Administrator\cow
+                  if (-not (Test-Path "C:\Users\Administrator\cow")) {
+                      New-Item -ItemType Directory -Path "C:\Users\Administrator\cow" -Force
+                      Copy-Item "C:\Windows\system32\config\systemprofile\cow\cm_autoconfig.json" "C:\Users\Administrator\cow\"
+                  }
+
+                  CostMinimizer --configure --auto-update-conf
+
+                  Write-Host "CostMinimizer setup completed successfully"
+              }
+          }
+          catch {
+              Write-Host "CostMinimizer setup failed"
+          }
+
+          # Install Billing MCP for Amazon Q
+          Write-Host "Setting up Billing MCP for Amazon Q..."
+          try {
+            Set-Location "C:\workshop"
+
+            # Clone repository with retry
+            $retryCount = 0
+            do {
+              try {
+                git clone https://github.com/awslabs/mcp.git
+                Write-Host "Billing MCP repository cloned successfully"
+                break
+              }
+              catch {
+                $retryCount++
+                Write-Host "Git clone attempt $retryCount failed"
+                if ($retryCount -ge 3) {
+                  Write-Host "Failed to clone repository after 3 attempts"
+                  break
+                }
+                Start-Sleep -Seconds 30
+              }
+            } while ($retryCount -lt 3)
+
+            if (Test-Path "mcp") {
+              Set-Location "mcp"  # Fixed: was "cmp"
+
+              # Setup config json file version
+              Write-Host "Setting up mcp.json config json file..."
+
+              # test if folder C:\Users\Administrator\.aws\amazonq does not exists, else create Item
+              if (-not (Test-Path "C:\Users\Administrator\.aws\amazonq")) {
+                New-Item -ItemType Directory -Path "C:\Users\Administrator\.aws\amazonq" -Force
+              }
+
+              $config = @{
+                "mcpServers" = @{
+                  "awslabs.billing-cost-management-mcp-server" = @{
+                    "command" = "uvx"
+                    "args" = @(
+                      "--from",
+                      "awslabs.billing-cost-management-mcp-server@latest",
+                      "awslabs.billing-cost-management-mcp-server.exe"
+                    )
+                    "env" = @{
+                      "FASTMCP_LOG_LEVEL" = "ERROR"
+                      "AWS_PROFILE" = "default"
+                      "AWS_REGION" = "us-east-1"
+                    }
+                    "disabled" = $false
+                    "autoApprove" = @()
+                  }
+                }
+              }
+              $config | ConvertTo-Json -Depth 10 | Out-File -FilePath "C:\Users\Administrator\.aws\amazonq\mcp.json" -Encoding UTF8  # Fixed: UTF8 encoding and added -Depth
+
+              Write-Host "Billing MCP setup completed successfully"
+            }
+          }
+          catch {
+            Write-Host "Billing MCP setup failed: $($_.Exception.Message)"
+          }
+
+          # Install VS Code extensions
+          Write-Host "Installing VS Code extensions..."
+          Start-Sleep -Seconds 10
+
+          $extensions = @(
+              "AmazonWebServices.aws-toolkit-vscode",
+              "GitHub.vscode-pull-request-github",
+              "GitHub.remotehub",
+              "ms-python.python",
+              "ms-python.debugpy",
+              "amazonwebservices.amazon-q-vscode"
+          )
+
+          foreach ($extension in $extensions) {
+              try {
+                  Write-Host "Installing VS Code extension: $extension"
+                  code --install-extension $extension --force --user-data-dir "C:\Users\Administrator\.vscode"
+                  Start-Sleep -Seconds 5
+              }
+              catch {
+                  Write-Host "Failed to install extension $extension"
+              }
+          }
+
+          # Create completion marker
+          Write-Host "Creating completion marker..."
+          "User data script completed successfully at $(Get-Date)" | Out-File -FilePath "C:\UserDataComplete.txt"
+
+          Write-Host "EC2 User Data Script completed successfully at $(Get-Date)"
+          Stop-Transcript
+
+          </powershell>
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-Windows-DotNet-ReadyMade'
+        - Key: Workshop
+          Value: 'costminimizer-labs'
+        - Key: OS
+          Value: 'Windows'
+        - Key: Runtime
+          Value: 'DotNetCore'
+        - Key: Architecture
+          Value: 'x86_64'
+        - Key: Workload
+          Value: 'CPU-Intensive'
+
+Outputs:
+  WindowsInstanceCostMinimizerId:
+    Description: 'Instance ID of Windows .NET Core instance CostMinimizer'
+    Value: !Ref WindowsInstanceCostMinimizer
+    Export:
+      Name: !Sub '${AWS::StackName}-WindowsInstanceCostMinimizerId'
+
+  WindowsInstanceCostMinimizerPublicIP:
+    Description: 'Public IP of Windows instance 2'
+    Value: !GetAtt WindowsInstanceCostMinimizer.PublicIp
