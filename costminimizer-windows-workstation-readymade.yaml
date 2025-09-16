@@ -15,12 +15,21 @@ Metadata:
         Parameters:
           - KeyPairName
       - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcId
+          - SubnetId
+      - Label:
           default: "Workshop Configuration"
         Parameters:
           - WorkshopStackName
     ParameterLabels:
       KeyPairName:
         default: "EC2 Key Pair Name"
+      VpcId:
+        default: "VPC ID"
+      SubnetId:
+        default: "Subnet ID"
       WorkshopStackName:
         default: "Workshop Stack Name"
 
@@ -38,6 +47,18 @@ Parameters:
       Key pair name must be empty or contain only alphanumeric characters, hyphens, and underscores.
       The key pair must already exist in your AWS account.
     Default: 'keypaircostminimizer'
+  VpcId:
+    Type: String
+    Description: |
+      VPC ID where the EC2 instance will be launched.
+      Leave empty to use the default VPC.
+    Default: ''
+  SubnetId:
+    Type: String
+    Description: |
+      Subnet ID where the EC2 instance will be launched.
+      Leave empty to use the first available subnet in the selected/default VPC.
+    Default: ''
   WorkshopStackName:
     Type: String
     Default: 'costminimizer-labs-workshop'
@@ -54,6 +75,14 @@ Conditions:
       - Fn::Equals:
           - Ref: KeyPairName
           - ''
+  UseDefaultVpc:
+    Fn::Equals:
+      - Ref: VpcId
+      - ''
+  UseDefaultSubnet:
+    Fn::Equals:
+      - Ref: SubnetId
+      - ''
 
 Resources:
   # Security Group for Workshop Instances
@@ -61,7 +90,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: 'Security group for workshop instances'
-      VpcId: !Ref 'AWS::NoValue'
+      VpcId: !If [UseDefaultVpc, !Ref 'AWS::NoValue', !Ref VpcId]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -154,6 +183,7 @@ Resources:
       InstanceType: t3.xlarge  # Different size for cost comparison
       KeyName: !If [HasKeyPair, !Ref KeyPairName, !Ref 'AWS::NoValue']
       IamInstanceProfile: !Ref WorkshopInstanceProfile
+      SubnetId: !If [UseDefaultSubnet, !Ref 'AWS::NoValue', !Ref SubnetId]
       SecurityGroupIds:
         - !GetAtt WorkshopSecurityGroup.GroupId
       BlockDeviceMappings:
