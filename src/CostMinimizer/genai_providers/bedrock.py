@@ -43,7 +43,7 @@ class Bedrock(ProviderBase):
         self._throttling_exception = self.client.exceptions.ThrottlingException
 
         # Configure default model settings
-        self.model_id = self.appConfig.internals.get('internals', {}).get('genAI', {}).get('default_genai_model', 'anthropic.claude-3-5-sonnet-20241022-v2:0') 
+        self.model_id = self.appConfig.internals.get('internals', {}).get('genAI', {}).get('default_genai_model', 'us.anthropic.claude-3-5-sonnet-20241022-v2:0') 
         self.max_tokens = self.appConfig.internals.get('internals', {}).get('genAI', {}).get('max_tokens', 4096)
         self.temperature = self.appConfig.internals.get('internals', {}).get('genAI', {}).get('temperature', 0.7)
 
@@ -194,19 +194,8 @@ class Bedrock(ProviderBase):
                     logger=self.logger,
                     on_backoff=backoff_handler)
         def _call():
-            # Try to get inference profile ARN from config
-            inference_profile = self.appConfig.internals.get('internals', {}).get('genAI', {}).get('inference_profile_arn', None)
-            
-            # If inference profile is provided, use it
-            if inference_profile:
-                return self.client.converse(
-                    modelId=self.model_id, 
-                    messages=self.messages,
-                    inferenceProfile=inference_profile
-                )
-            else:
-                # Fall back to direct model ID for models that support on-demand throughput
-                return self.client.converse(modelId=self.model_id, messages=self.messages)
+            # Use inference profile for Claude 3.5 Sonnet
+            return self.client.converse(modelId=self.model_id, messages=self.messages)
         return _call
 
     def get_gen_ai_prompt(self, slide_name) -> str:
