@@ -43,6 +43,10 @@ Parameters:
     Default: 'costminimizer-labs-workshop'
     Description: |
       Name of the main CostMinimizer workshop infrastructure stack.
+  LatestWindowsAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
+    Description: 'Latest Windows Server 2022 AMI ID from SSM Parameter Store'
 
 Conditions:
   HasKeyPair:
@@ -140,11 +144,13 @@ Resources:
       Roles:
         - !Ref WorkshopRole
 
+
+
   # Pre-configured Windows Server 2022 Instance with .NET Core
   WindowsInstanceCostMinimizer:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0c9fb5d338f1eec43  # Windows Server 2022 Base
+      ImageId: !Ref LatestWindowsAmiId
       InstanceType: t3.xlarge  # Different size for cost comparison
       KeyName: !If [HasKeyPair, !Ref KeyPairName, !Ref 'AWS::NoValue']
       IamInstanceProfile: !Ref WorkshopInstanceProfile
