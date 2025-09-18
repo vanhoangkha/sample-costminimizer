@@ -161,20 +161,10 @@ python setup.py develop
 ```
 
 #### 2.5 Configure the tool
-This command will attempt to auto configure.  
-```
-CostMinimizer --configure --auto-update-conf
-```
 
-This command will find most configuration parameters (specified below) and configure them.  All unconfigured parameters will need to be manually configured.  Manual configuration is done by running the command below, which will bring up the menu driven configuration.
+There is a json configuration file named cm_autoconfig in the report output directory. The default location for this config file is $HOME/cow/cm_autoconfig.json.  
 
-```
-CostMinimizer --configure
-```
-
-Optionally, you may create a json file named cm_autoconfig in the report output directory.  The default location for the report output directory $HOME/cow/cm_autoconfig.json.  
-
-For example if you know your CUR database name, table name and bucket information, you may specify it in this file like so: 
+For example if you know your CUR database name, table name and bucket information, you may run the following commands: 
 
 ```
 # Get the current AWS account number dynamically
@@ -190,9 +180,17 @@ cat > ~/cow/cm_autoconfig.json << EOF
   "cur_s3_bucket": "s3://aws-athena-query-results-${AWS_ACCOUNT_ID}-us-east-1/"
 }
 EOF
+
+# execute automatic update of configuration based on cm_autoconfig.json and current credentials env
+CostMinimizer --configure --auto-update-conf
 ```
 
-You may add any of the configuration parameters as specified in the table below.  Rerunning the --auto-update-conf configuration command is step 2.5 is an idempotent operation which will only add your new parameters when changed or added.
+This --auto-update-conf command will find most configuration parameters and configure them.  All unconfigured parameters will need to be manually configured.  Manual configuration is done by running the command below, which will bring up the menu driven configuration.
+
+```
+CostMinimizer --configure
+```
+
 
 #### 2.7 Last step, check the current configuration of the tool
 ```
