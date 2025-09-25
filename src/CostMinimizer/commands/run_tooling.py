@@ -102,8 +102,8 @@ class RunToolingRun:
                     reports[f'{report}.{report_provider}'] = True
                 except Exception as e:
                     ErrorInReportDiscovery(f'Unable to pull report name {report_name} from the sqllite database.')
-
-        self.appConfig.customers, self.appConfig.reports = self.report_request_parse(reports)
+        
+        return reports
 
     def set_report_request(self, menu_selected_reports) -> None:
         '''
@@ -134,8 +134,8 @@ class RunToolingRun:
                         reports[f'{report}.{report_provider}'] = True
                     except:
                         ErrorInReportDiscovery(f'Unable to pull report name {report_common_name} from the sqllite database.')
-
-            self.appConfig.customers, self.appConfig.reports = self.report_request_parse(reports)
+                    
+                return reports
 
         elif self.appConfig.mode == 'module':
             '''
@@ -205,13 +205,8 @@ class RunToolingRun:
             self.use_s3_bucket = (hasattr(self.appConfig.arguments_parsed, 'bucket_for_results') and self.appConfig.arguments_parsed.bucket_for_results is not None) or (str(self.appConfig.internals['internals']['results_folder']['enable_bucket_for_results']).lower() in ('true', 'yes', '1', 't', 'y'))
             if self.use_s3_bucket:
                 self.s3_bucket_name = self.appConfig.arguments_parsed.bucket_for_results if (hasattr(self.appConfig.arguments_parsed, 'bucket_for_results') and self.appConfig.arguments_parsed.bucket_for_results is not None) else self.appConfig.internals['internals']['results_folder']['bucket_for_results']
-
-            # If using S3, create a temporary local structure that will be uploaded later
-            if self.use_s3_bucket:
                 self.logger.info(f"Results will be uploaded to S3 bucket: {self.s3_bucket_name}")
 
-            # Upload to S3 if enabled
-            if self.use_s3_bucket:
                 s3_key = f"{self.appConfig.config['aws_cow_account']}_{os.path.basename(self.final_report_output_folder)}"
                 romd.upload_to_s3(self.final_report_output_folder, s3_key, self.s3_bucket_name)
 
@@ -271,12 +266,18 @@ class RunToolingRun:
         browser: user is using the browser to select report criteria
         '''
 
+        self.appConfig.report_request_from_custom_yaml = False
+
         self.logger.info(f'Discovering app mode....')
         if self.appConfig.default_report_request.is_file():
             self._set_report_request_mode('default')
         else:
             self._set_report_request_mode('menu')
 
+        # --yaml on command line overrides all other options
+        if self.appConfig.arguments_parsed.yaml:
+            self._set_report_request_mode('default')
+            self.appConfig.report_request_from_custom_yaml = True
         return self.appConfig.report_request_mode
 
     def display_available_reports_menu(self):
@@ -421,7 +422,7 @@ class RunToolingRun:
         '''display accounts menu; return selected accounts'''
         return self.appConfig.config['aws_cow_account']
     
-    def report_request_parse(self, parsed_reports_from_menu=None) -> tuple:
+    def report_request_parse(self, parsed_reports_from_menu=None, preconditioned=False) -> tuple:
         """
         Parse the report request.
 
@@ -429,27 +430,89 @@ class RunToolingRun:
         :return: Tuple containing parsed report information
         """
         ''' parse and return report request'''
-
         datasource = 'database'
+        self.appConfig.datasource = datasource
         datasource_file = self.appConfig.database.database_file.resolve()
+        
         if self.appConfig.mode == 'cli':
             '''
             In cli mode - we first check if there is a report request yaml file provided with the -f option.
             Next we check if there is a report request file in the default location.
             Else we check for the report request specified on the command line.
             '''
-            try:
-                if self.appConfig.default_report_request.is_file():
-                    #Try file from the cow_internals default location
-                    datasource = 'yaml'
-                    report_request = ToolingReportRequest(self.appConfig.default_report_request)
-                    datasource_file = self.appConfig.default_report_request
-                else:
+
+            #process preconditioned report request
+            if preconditioned:
+                try:
                     #Try with data from report and customer input menus
                     report_request = ToolingReportRequest(
                         self.appConfig.default_report_request,
                         read_from_database=True,
                         reports_from_menu=parsed_reports_from_menu
+                        )
+                except Exception as e:
+                    self.logger.error(f"Error runnning preconditioned reporting: {str(e)}")
+                    raise
+
+                return report_request.get_all_reports()
+
+            #process normal report requests
+            try:
+                if self.appConfig.arguments_parsed.yaml == 'ssm':
+                    #Obtain S3 bucket from SSM parameter; Fetch yaml file from S3 then import
+
+                    datasource = 'yaml'
+                    from ..report_request_parser.report_request_from_ssm import ReportRequestFromSSM
+                    reports = ReportRequestFromSSM().get_report_request()
+                    report_request = ToolingReportRequest(
+                        reports['reports'],
+                        read_from_database=False,
+                        reports_from_menu=reports['reports']
+                        )              
+                elif self.appConfig.arguments_parsed.yaml:
+                    #Try with data from file; location of file from arguments
+
+                    datasource = 'yaml'
+                    report_request = ToolingReportRequest(
+                        self.appConfig.arguments_parsed.yaml,
+                        read_from_database=False,
+                        reports_from_menu=parsed_reports_from_menu
+                        )
+                elif self.appConfig.arguments_parsed.checks:
+                    # Use the checks provided via command line
+                    if ('ALL' in self.appConfig.arguments_parsed.checks):
+                        l_list_reports =  [i.Name for i in self.appConfig.database.get_available_reports()]
+                    else:
+                        l_list_reports = self.appConfig.arguments_parsed.checks
+                    #set customer and report requests
+                    reports = self.set_report_request_arguments(l_list_reports)
+
+                    report_request = ToolingReportRequest(
+                        reports,
+                        read_from_database=False,
+                        reports_from_menu=reports
+                        )
+
+                elif self.appConfig.default_report_request.is_file():
+                    #Try file from the cow_internals default location
+                    
+                    datasource = 'yaml'
+                    self.appConfig.datasource = datasource
+                    report_request = ToolingReportRequest(self.appConfig.default_report_request)
+                    datasource_file = self.appConfig.default_report_request
+                else:
+                    #Try with data from the input menu
+
+                    datasource = 'database'
+                    menu_selected_reports = self.display_available_reports_menu()
+                    #set customer and report requests
+                    reports = self.set_report_request(menu_selected_reports)
+                    clear_cli_terminal(self.appConfig.mode)
+
+                    report_request = ToolingReportRequest(
+                        self.appConfig.default_report_request,
+                        read_from_database=True,
+                        reports_from_menu=reports
                         )
 
                 if self.appConfig.debug:
@@ -480,6 +543,27 @@ class RunToolingRun:
         if hasattr(self.appConfig.arguments_parsed, 'usertags') and (self.appConfig.arguments_parsed.usertags is True):
             self.appConfig.using_tags = True
 
+    def run_discovery(self) -> None:
+        # Get a list of available regions from the account
+        # display message for the user to wait that getting list of regions is ongoing
+        self.logger.info(f"Getting list of available regions for the admin account. Please wait...")
+        self.appConfig.account_region_discovery = RegionDiscoveryController()
+        self.appConfig.account_region_discovery.set_discovered_regions()
+
+        # run preconditioned reports
+        # display message for the user to wait that getting list of preconditionned reports is ongoing
+        self.logger.info(f"Getting list of preconditionned reports for the admin account. Please wait...")
+        self.appConfig.resource_discovery = ResourceDiscoveryController()
+    
+    def run_precondition_reports(self):
+        # Store precondition reports separately to avoid overwriting main reports
+        self.appConfig.customers, self.appConfig.reports = self.report_request_parse(
+            self.appConfig.resource_discovery.precondition_reports, 
+            preconditioned=True
+            )
+        
+        self.appConfig.resource_discovery.run(self.report_controller)
+   
     def run(self):
 
         '''
@@ -496,47 +580,24 @@ class RunToolingRun:
         self.set_using_tags_from_arguments()
 
         self.report_controller = self.report_controller_build(self.writer)
+        #Run account discovery in controller setup
         self.report_controller._controller_setup()
 
-        # Get a list of available regions from the account
-        # display message for the user to wait that getting list of regions is ongoing
-        self.logger.info(f"Getting list of available regions for the admin account. Please wait...")
-        self.appConfig.account_region_discovery = RegionDiscoveryController()
-        self.appConfig.account_region_discovery.set_discovered_regions()
+        #run resource discovery and region discovery 
+        self.run_discovery()
 
-        # run preconditioned reports
-        # display message for the user to wait that getting list of preconditionned reports is ongoing
-        self.logger.info(f"Getting list of preconditionned reports for the admin account. Please wait...")
-        self.appConfig.precondition_reports = ResourceDiscoveryController()
-        # Store precondition reports separately to avoid overwriting main reports
-        precondition_customers, precondition_reports = self.report_request_parse(self.appConfig.precondition_reports.precondition_reports)
-        # Temporarily set for precondition execution
-        self.appConfig.customers, self.appConfig.reports = precondition_customers, precondition_reports
-        self.appConfig.precondition_reports.run(self.report_controller)
+        # run precondition reports; precondition reports are reports which fetch data required by 
+        # other parts of the application or other cost optimization reports 
+        self.run_precondition_reports()
         
         if self.appConfig.mode == 'cli':
 
             # define self.appConfig.reports list
+            # this will determine if report selection comes from the interactive menu or 
+            # if reports selected come from a yaml file
             self.check_report_request_mode()
 
-            menu_selected_reports = None
-            if self.appConfig.arguments_parsed.checks:
-                # Use the checks provided via command line
-                if ('ALL' in self.appConfig.arguments_parsed.checks):
-                    l_list_reports =  [i.Name for i in self.appConfig.database.get_available_reports()]
-                else:
-                    l_list_reports = self.appConfig.arguments_parsed.checks
-                #set customer and report requests
-                self.set_report_request_arguments(l_list_reports)
-
-            elif self.appConfig.report_request_mode == 'menu':
-                # Display reports menu - only if report request is not coming from YAML file or GUI
-                menu_selected_reports = self.display_available_reports_menu()
-
-                #set customer and report requests
-                self.set_report_request(menu_selected_reports)
-                
-                clear_cli_terminal(self.appConfig.mode)
+            self.appConfig.customers, self.appConfig.reports = self.report_request_parse()
 
             requires_region_selection = self.check_for_required_region()
 

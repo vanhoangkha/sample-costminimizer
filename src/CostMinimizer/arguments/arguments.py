@@ -201,6 +201,12 @@ class ToolingArguments(Singleton):
         parser.add_argument(
             '-v', '--version', action='store_true',
             help=f"{Fore.GREEN}Display the current version of {__tooling_name__} Tooling{Style.RESET_ALL}", default=False)
+        
+        parser.add_argument(
+            '-y', '--yaml', type=str,
+            help=f"{Fore.GREEN}Specify a YAML file to use for scanning parameters{Style.RESET_ALL}",
+            default=None
+        )
 
         # Store the parser and parse the arguments
         self.parser = parser
