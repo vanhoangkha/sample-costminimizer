@@ -14,7 +14,7 @@ class Ec2Query:
         self.appConfig = Config()
     
     def get_instance_unblended_cost_from_cur(self, instance_id):
-        df = self.appConfig.precondition_reports.precondition_reports_in_progress[0].get_report_dataframe()
+        df = self.appConfig.resource_discovery.precondition_reports_in_progress[0].get_report_dataframe()
         mask = df['line_item_resource_id'] == instance_id
 
         try:
