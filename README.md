@@ -380,6 +380,52 @@ With MCP integration, you can ask AI assistants questions like:
 
 **Note**: Ensure your AWS credentials have the required permissions listed in the IAM Permissions section below.
 
+## Docker Deployment
+
+CostMinimizer can be containerized and deployed using Docker with Amazon ECR.
+
+### Build and Push Docker Image to ECR
+
+1. **Create ECR Repository**
+   ```bash
+   aws ecr create-repository --repository-name costminimizer --region us-east-1
+   ```
+
+2. **Build Docker Image**
+   ```bash
+   # Navigate to project directory
+   cd sample-costminimizer
+   
+   # Build the Docker image
+   docker build -t costminimizer .
+   ```
+
+3. **Tag and Push to ECR**
+   ```bash
+   # Get ECR login token
+   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com
+   
+   # Tag the image
+   docker tag costminimizer:latest <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com/costminimizer:latest
+   
+   # Push to ECR
+   docker push <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com/costminimizer:latest
+   ```
+
+### Deploy on EC2 instance
+
+1. **Run costminimizer container in linux env**
+   ```bash
+    token=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+    roleName=$(curl -H "X-aws-ec2-metadata-token: $token" "http://169.254.169.254/latest/meta-data/iam/security-credentials/")
+    credentials=$(curl -H "X-aws-ec2-metadata-token: $token" "http://169.254.169.254/latest/meta-data/iam/security-credentials/$roleName")
+    export AWS_ACCESS_KEY_ID=$(echo $credentials | jq -r '.AccessKeyId')
+    export AWS_SECRET_ACCESS_KEY=$(echo $credentials | jq -r '.SecretAccessKey')
+    export AWS_SESSION_TOKEN=$(echo $credentials | jq -r '.Token')
+    docker run -it -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN -v ~/cow:/root/cow <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com/aws-samples/costminimizer:latest --ce
+
+   ```
+
 
 #### Troubleshooting
 1. Authentication Issues
