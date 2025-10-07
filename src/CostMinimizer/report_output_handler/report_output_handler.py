@@ -124,7 +124,7 @@ class ReportOutputHandlerBase:
         """Upload a file or directory to S3 bucket"""
             
         try:
-            s3_client = boto3.client('s3')
+            s3_client = self.appConfig.get_client('s3', region_name=self.appConfig.default_selected_region)
             
             # remove s3:// in front of s3_bucket_name
             s3_bucket_name = s3_bucket_name.replace('s3://', '').replace('/', '')
@@ -142,6 +142,7 @@ class ReportOutputHandlerBase:
                         s3_file_key = f"{s3_key}/{relative_path}"
                         self.logger.info(f"Uploading file {local_file_path} to s3://{s3_bucket_name}/{s3_file_key}")
                         s3_client.upload_file(local_file_path, s3_bucket_name, s3_file_key)
+                        self.appConfig.console.print(f'[green]Uploading file {local_file_path} to s3://{s3_bucket_name}/{s3_file_key}')
         except Exception as e:
             self.logger.error(f"Error uploading to S3: {str(e)}")
             raise

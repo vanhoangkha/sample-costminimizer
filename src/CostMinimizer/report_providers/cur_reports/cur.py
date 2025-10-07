@@ -160,8 +160,8 @@ class CurReports(ReportProviderBase):
         def run_query( report_object, display, report_name):
             try:
                 # Start by checking the CUR version (legacy or v2.0)
-                l_cur_version = self.appConfig.precondition_reports.cur_type
-                l_cur_resource_id_exists = self.appConfig.precondition_reports.resource_id_column_exists
+                l_cur_version = self.appConfig.resource_discovery.cur_type
+                l_cur_resource_id_exists = self.appConfig.resource_discovery.resource_id_column_exists
                 if not l_cur_version in ['v2.0', 'legacy']:
                     self.logger.error('CUR type neither v2.0 nor legacy. Please build a new CUR in the AWS billing console !')
                     return
