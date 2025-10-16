@@ -469,11 +469,11 @@ class RunToolingRun:
 
             #process normal report requests
             try:
-                if self.appConfig.arguments_parsed.yaml == 'ssm':
+                if self.appConfig.arguments_parsed.yaml and self.appConfig.arguments_parsed.yaml.strip() == 'ssm':
                     #Obtain S3 bucket from SSM parameter; Fetch yaml file from S3 then import
 
                     if self.appConfig.arguments_parsed.debug:
-                        self.appConfig.console.print(f'[blue]Parsing report data source from SSM: {self.appConfig.arguments_parsed.yaml}')
+                        self.appConfig.console.print(f'[blue]Parsing report data source from SSM: {self.appConfig.arguments_parsed.yaml.strip()}')
 
                     datasource = 'yaml'
                     from ..report_request_parser.report_request_from_ssm import ReportRequestFromSSM
@@ -487,15 +487,15 @@ class RunToolingRun:
                         read_from_database=False,
                         reports_from_menu=reports['reports']
                         )              
-                elif self.appConfig.arguments_parsed.yaml and self.appConfig.arguments_parsed.yaml != 'ssm':
+                elif self.appConfig.arguments_parsed.yaml and self.appConfig.arguments_parsed.yaml.strip() != 'ssm':
                     #Try with data from file; location of file from arguments
 
                     if self.appConfig.arguments_parsed.debug:
-                        self.appConfig.console.print(f'[blue]Parsing report data source from YAML file: {self.appConfig.arguments_parsed.yaml}')
+                        self.appConfig.console.print(f'[blue]Parsing report data source from YAML file: {self.appConfig.arguments_parsed.yaml.strip()}')
 
                     datasource = 'yaml'
                     report_request = ToolingReportRequest(
-                        self.appConfig.arguments_parsed.yaml,
+                        self.appConfig.arguments_parsed.yaml.strip(),
                         read_from_database=False,
                         reports_from_menu=parsed_reports_from_menu
                         )
