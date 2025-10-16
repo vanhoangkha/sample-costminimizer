@@ -445,6 +445,10 @@ class RunToolingRun:
         self.appConfig.datasource = datasource
         datasource_file = self.appConfig.database.database_file.resolve()
         
+        if self.appConfig.arguments_parsed.debug:
+            self.appConfig.console.print(f'[blue]self.appConfig.arguments_parsed.yaml value:{self.appConfig.arguments_parsed.yaml}')
+            self.appConfig.console.print(f'[blue]self.appConfig.arguments_parsed.checks type:{type(self.appConfig.arguments_parsed.checks)}')
+
         if self.appConfig.mode == 'cli':
             '''
             In cli mode - we first check if there is a report request yaml file provided with the -f option.
@@ -469,7 +473,19 @@ class RunToolingRun:
 
             #process normal report requests
             try:
-                if self.appConfig.arguments_parsed.yaml and self.appConfig.arguments_parsed.yaml.strip() == 'ssm':
+                if self.appConfig.arguments_parsed.yaml and self.appConfig.arguments_parsed.yaml.strip() != 'ssm':
+                    #Try with data from file; location of file from arguments
+
+                    if self.appConfig.arguments_parsed.debug:
+                        self.appConfig.console.print(f'[blue]Parsing report data source from YAML file: {self.appConfig.arguments_parsed.yaml.strip()}')
+
+                    datasource = 'yaml'
+                    report_request = ToolingReportRequest(
+                        self.appConfig.arguments_parsed.yaml.strip(),
+                        read_from_database=False,
+                        reports_from_menu=parsed_reports_from_menu
+                        )
+                elif self.appConfig.arguments_parsed.yaml and self.appConfig.arguments_parsed.yaml.strip() == 'ssm':
                     #Obtain S3 bucket from SSM parameter; Fetch yaml file from S3 then import
 
                     if self.appConfig.arguments_parsed.debug:
@@ -487,18 +503,6 @@ class RunToolingRun:
                         read_from_database=False,
                         reports_from_menu=reports['reports']
                         )              
-                elif self.appConfig.arguments_parsed.yaml and self.appConfig.arguments_parsed.yaml.strip() != 'ssm':
-                    #Try with data from file; location of file from arguments
-
-                    if self.appConfig.arguments_parsed.debug:
-                        self.appConfig.console.print(f'[blue]Parsing report data source from YAML file: {self.appConfig.arguments_parsed.yaml.strip()}')
-
-                    datasource = 'yaml'
-                    report_request = ToolingReportRequest(
-                        self.appConfig.arguments_parsed.yaml.strip(),
-                        read_from_database=False,
-                        reports_from_menu=parsed_reports_from_menu
-                        )
                 elif self.appConfig.arguments_parsed.checks:
                     # Use the checks provided via command line
 
