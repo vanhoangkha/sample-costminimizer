@@ -207,11 +207,19 @@ class RunToolingRun:
 
             # Check if results should be saved to S3
             self.use_s3_bucket = (hasattr(self.appConfig.arguments_parsed, 'bucket_for_results') and self.appConfig.arguments_parsed.bucket_for_results is not None) or (str(self.appConfig.internals['internals']['results_folder']['enable_bucket_for_results']).lower() in ('true', 'yes', '1', 't', 'y'))
+            
+            if self.appConfig.arguments_parsed.debug:
+                self.appConfig.console.print(f'[blue]Results will be saved to S3?: {self.use_s3_bucket}')
+            
             if self.use_s3_bucket:
                 self.s3_bucket_name = self.appConfig.arguments_parsed.bucket_for_results if (hasattr(self.appConfig.arguments_parsed, 'bucket_for_results') and self.appConfig.arguments_parsed.bucket_for_results is not None) else self.appConfig.internals['internals']['results_folder']['bucket_for_results']
                 self.logger.info(f"Results will be uploaded to S3 bucket: {self.s3_bucket_name}")
-
+                if self.appConfig.arguments_parsed.debug:
+                    self.appConfig.console.print(f'[blue]Results will be uploaded to S3 bucket: {self.s3_bucket_name}')
+                
                 s3_key = f"{self.appConfig.config['aws_cow_account']}_{os.path.basename(self.final_report_output_folder)}"
+                if self.appConfig.arguments_parsed.debug:
+                    self.appConfig.console.print(f'[blue]Results will be uploaded to S3 key: {s3_key}')
                 romd.upload_to_s3(self.final_report_output_folder, s3_key, self.s3_bucket_name)
 
             return roe
