@@ -1,10 +1,12 @@
 from ..utils.yaml_loader import import_yaml_file
 import yaml
+import logging
 
 class ReportRequestFromSSM:
 
     def __init__(self, parameters_prefix='pgai-'):
         from ..config.config import Config
+        self.logger = logging.getLogger(__name__)
 
         self.appConfig = Config()
         self.ssm_s3_parameter = f'costminimizer-report-requests'
@@ -25,6 +27,12 @@ class ReportRequestFromSSM:
             obj = s3_client.get_object(Bucket=s3_bucket, Key=self.s3_file_name)
             #report_request = import_yaml_file(obj['Body'].read().decode('utf-8'))
             report_request = yaml.safe_load(obj['Body'].read().decode('utf-8'))
+            ssm_msg = f"Report request loaded from SSM: {self.ssm_s3_parameter}"
+            bucket_msg = f"Report request pulled from bucket: {s3_bucket}"
+            self.appConfig.console.print(ssm_msg)
+            self.appConfig.console.print(bucket_msg)
+            self.logger.info(ssm_msg)
+            self.logger.info(bucket_msg)
             return report_request
         except Exception as e:
             self.appConfig.logger.error(f"Error retrieving report request from SSM: {e}")

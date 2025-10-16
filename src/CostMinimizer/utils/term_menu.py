@@ -1,4 +1,5 @@
 import os
+import sys
 
 from ..utils.system_validations import determine_os
 
@@ -22,6 +23,10 @@ def launch_terminal_menu(list_menus, title, subtitle, multi_select=True, show_mu
     #menu.show()
     #menu.join()
     #return menu.selected_option
+
+    if not sys.stdin.isatty():
+        print("Non-interactive environment detected; defaulting to first option.")
+        return []
 
     operating_system = determine_os()
 
