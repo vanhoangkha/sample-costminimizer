@@ -72,6 +72,10 @@ class ReportsParse:
 
     def get_all_reports(self) -> dict:
         '''return all reports as raw dict'''
+        if self.report_request is None:
+            self.logger.error(f'ReportRequestFileNotProvidedException: No report request file provided.')
+            self.appConfig.console.print(f'[red]No report request data provided.')
+            raise ReportRequestFileNotProvidedException('No report request file provided.')
         return self.report_request
 
     def get_all_enabled_reports(self) -> list:

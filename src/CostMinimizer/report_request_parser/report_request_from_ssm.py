@@ -24,15 +24,25 @@ class ReportRequestFromSSM:
         try:
             response = ssm_client.get_parameter(Name=self.ssm_s3_parameter, WithDecryption=True)
             s3_bucket = response['Parameter']['Value']
-            obj = s3_client.get_object(Bucket=s3_bucket, Key=self.s3_file_name)
+
+            if self.appConfig.arguments_parsed.debug:
+                self.appConfig.console.print(f'[blue]Report request SSM S3 bucket parameter: {self.ssm_s3_parameter}')
+                self.appConfig.console.print(f'[blue]Report request bucket: {s3_bucket}')
+
+            try:
+                obj = s3_client.get_object(Bucket=s3_bucket, Key=self.s3_file_name)
+            except Exception as e:
+                msg = f"Error retrieving report request {self.s3_file_name} from S3: {e}"
+                self.appConfig.logger.error(msg)
+                self.appConfig.console.print(msg)
+
             #report_request = import_yaml_file(obj['Body'].read().decode('utf-8'))
             report_request = yaml.safe_load(obj['Body'].read().decode('utf-8'))
-            ssm_msg = f"Report request loaded from SSM: {self.ssm_s3_parameter}"
-            bucket_msg = f"Report request pulled from bucket: {s3_bucket}"
-            self.appConfig.console.print(ssm_msg)
-            self.appConfig.console.print(bucket_msg)
-            self.logger.info(ssm_msg)
-            self.logger.info(bucket_msg)
+            if self.appConfig.arguments_parsed.debug:
+                self.appConfig.console.print(f'[blue]Report request: {report_request}')
+            else:
+                self.appConfig.logger.info(f"Report request retrieved from SSM: {s3_bucket}")
+                self.appConfig.console.print(f'[green]Report request retrieved from SSM: {s3_bucket}')
             return report_request
         except Exception as e:
             self.appConfig.logger.error(f"Error retrieving report request from SSM: {e}")
