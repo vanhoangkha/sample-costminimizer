@@ -487,7 +487,7 @@ class RunToolingRun:
                         read_from_database=False,
                         reports_from_menu=reports['reports']
                         )              
-                elif self.appConfig.arguments_parsed.yaml:
+                elif self.appConfig.arguments_parsed.yaml and self.appConfig.arguments_parsed.yaml != 'ssm':
                     #Try with data from file; location of file from arguments
 
                     if self.appConfig.arguments_parsed.debug:
