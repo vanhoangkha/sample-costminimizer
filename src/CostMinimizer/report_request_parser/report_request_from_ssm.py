@@ -7,7 +7,7 @@ class ReportRequestFromSSM:
         from ..config.config import Config
 
         self.appConfig = Config()
-        self.ssm_s3_parameter = f'{parameters_prefix}report-requests'
+        self.ssm_s3_parameter = f'costminimizer-report-requests'
         self.s3_file_name = 'report_request.yaml'
 
     def get_ssm_client(self):
