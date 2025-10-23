@@ -54,7 +54,7 @@ class CoRdsserverless(CoBase):
         return 'co'
 
     def service_name(self):
-        return 'RDS'
+        return 'Compute Optimizer'
 
     def get_required_columns(self) -> list:
         return [
