@@ -1,0 +1,39 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "support:DescribeTrustedAdvisorChecks",
+        "support:DescribeTrustedAdvisorCheckResult",
+        "support:DescribeTrustedAdvisorCheckSummaries",
+        "ce:GetCostAndUsage",
+        "ce:GetReservationCoverage",
+        "ce:GetReservationUtilization",
+        "ce:GetTags",
+        "athena:StartQueryExecution",
+        "athena:GetQueryExecution",
+        "athena:GetQueryResults",
+        "athena:ListDataCatalogs",
+        "athena:ListDatabases",
+        "sts:GetCallerIdentity",
+        "bedrock:Converse",
+        "bedrock:InvokeModel",
+        "ec2:Describe*",
+        "compute-optimizer:Get*",
+        "glue:GetDatabases",
+        "glue:GetTables",
+        "organizations:DescribeOrganization",
+        "organizations:ListAccounts",
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+        "s3:PutObject",
+        "s3:GetObject",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CostMinimizer Docker Infrastructure
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.medium
+
+Resources:
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: costminimizer
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: '{"rules":[{"rulePriority":1,"selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countUnit":"days","countNumber":7},"action":{"type":"expire"}}]}'
+
+  ReportsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'costminimizer-reports-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CostMinimizerEC2Role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: CostMinimizerPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - support:Describe*
+                  - ce:Get*
+                  - athena:*
+                  - sts:GetCallerIdentity
+                  - bedrock:Converse
+                  - bedrock:InvokeModel
+                  - ec2:Describe*
+                  - compute-optimizer:Get*
+                  - glue:Get*
+                  - organizations:Describe*
+                  - organizations:List*
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt ReportsBucket.Arn
+                  - !Sub '${ReportsBucket.Arn}/*'
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: CostMinimizerEC2Profile
+      Roles:
+        - !Ref EC2Role
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: CostMinimizer - HTTPS outbound only
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  WeeklySchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: costminimizer-weekly
+      ScheduleExpression: 'cron(0 8 ? * MON *)'
+      State: ENABLED
+
+Outputs:
+  ECRRepositoryUri:
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/costminimizer'
+  ReportsBucket:
+    Value: !Ref ReportsBucket
+  IAMRole:
+    Value: !Ref EC2Role
