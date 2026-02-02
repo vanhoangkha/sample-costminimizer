@@ -2,50 +2,49 @@
 
 AI-powered AWS cost optimization tool deployed via Docker on EC2.
 
-![Architecture](costminimizer-architecture.png)
+## Architecture
+
+![CostMinimizer Architecture](./costminimizer-architecture.png)
+
+### Components
+
+| Layer | Service | Purpose |
+|-------|---------|---------|
+| **Access** | SSM Session Manager | Secure access (no SSH) |
+| **Compute** | EC2 + Docker | Run CostMinimizer container |
+| **Registry** | ECR | Store secure Docker image |
+| **Schedule** | EventBridge | Weekly automated runs |
+| **Data** | Cost Explorer, Trusted Advisor, Compute Optimizer | AWS cost data |
+| **AI** | Bedrock | Generate recommendations |
+| **Storage** | S3 | Store reports (encrypted) |
+| **Monitor** | CloudWatch, SNS | Logs & notifications |
 
 ## Quick Deploy
 
 ```bash
-# Deploy infrastructure
+# 1. Deploy infrastructure
 aws cloudformation deploy --template-file cloudformation-deploy.yaml \
   --stack-name costminimizer --capabilities CAPABILITY_NAMED_IAM
 
-# Build & push Docker image
+# 2. Build & push Docker image
 ./docker-deploy.sh
 ```
 
-## Architecture
+## Security
 
-| Component | Resource |
-|-----------|----------|
-| Compute | EC2 t3.medium + Docker |
-| Container Registry | ECR (costminimizer:secure) |
-| Storage | S3 (encrypted reports) |
-| Scheduling | EventBridge (Weekly Monday 8AM) |
-| Access | SSM Session Manager (no SSH) |
-| Monitoring | CloudWatch Logs + SNS |
-| AI Analysis | Bedrock |
-
-## Security Features
-
-- ✅ Slim base image (0 Critical/High CVEs)
-- ✅ Outbound HTTPS only (port 443)
-- ✅ S3 encryption (AES-256) + HTTPS enforced
-- ✅ IMDSv2 required
-- ✅ No SSH keys (SSM access only)
-- ✅ ECR image scanning enabled
-- ✅ IAM least privilege
+| Feature | Status |
+|---------|--------|
+| Base image CVEs (Critical/High) | ✅ 0 |
+| Outbound traffic | ✅ HTTPS only |
+| S3 encryption | ✅ AES-256 |
+| Instance metadata | ✅ IMDSv2 |
+| Access method | ✅ SSM (no SSH) |
+| ECR scanning | ✅ Enabled |
 
 ## Usage
 
 ```bash
-# Run Cost Explorer reports
-aws ssm send-command --instance-ids <INSTANCE_ID> \
-  --document-name "CostMinimizer-RunReports" \
-  --parameters 'ReportTypes=--ce'
-
-# Run all reports (CE + Trusted Advisor + Compute Optimizer)
+# Run reports
 aws ssm send-command --instance-ids <INSTANCE_ID> \
   --document-name "CostMinimizer-RunReports" \
   --parameters 'ReportTypes=--ce --ta --co'
@@ -54,15 +53,12 @@ aws ssm send-command --instance-ids <INSTANCE_ID> \
 aws s3 sync s3://costminimizer-reports-<ACCOUNT_ID>/ ./reports/
 ```
 
-## Files
-
-| File | Description |
-|------|-------------|
-| `Dockerfile.secure` | Hardened Docker image |
-| `cloudformation-deploy.yaml` | Full infrastructure as code |
-| `docker-deploy.sh` | ECR build & push script |
-| `iam-policy.json` | IAM policy template |
-
 ## Cost
 
-~$31/month (on-demand) or ~$10/month (Spot Instance)
+| Resource | Monthly |
+|----------|---------|
+| EC2 t3.medium | ~$30 |
+| S3 + ECR + Logs | ~$1 |
+| **Total** | **~$31** |
+
+💡 Use Spot Instance to reduce to ~$10/month
