@@ -561,3 +561,22 @@ To run all the boto3 calls in the CostMinimizer application, you'll need the fol
 
 **Note:** Replace `${your-cur-s3-bucket}` with your actual CUR S3 bucket name and `${your-athena-results-bucket}` with your Athena query results bucket name.
 
+
+---
+
+## Docker Deployment Architecture
+
+![CostMinimizer Architecture](./costminimizer-architecture.png)
+
+### Quick Docker Deploy
+
+```bash
+# Deploy infrastructure
+aws cloudformation deploy --template-file cloudformation-deploy.yaml \
+  --stack-name costminimizer --capabilities CAPABILITY_NAMED_IAM
+
+# Build & push secure image
+./docker-deploy.sh
+```
+
+See [README_DOCKER_DEPLOY.md](README_DOCKER_DEPLOY.md) for full Docker deployment guide.
