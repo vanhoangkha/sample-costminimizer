@@ -6,11 +6,11 @@
 
 > Comprehensive AWS cost analysis and optimization tool leveraging Cost Explorer, Trusted Advisor, Compute Optimizer, and Amazon Bedrock AI to generate actionable cost-saving recommendations.
 
-## 🏗️ Architecture
+## Architecture
 
 ![CostMinimizer Architecture](./costminimizer-architecture.png)
 
-## ✨ Features
+## Features
 
 - **Multi-Source Data Collection**: Cost Explorer, Trusted Advisor, Compute Optimizer, CUR
 - **AI-Powered Analysis**: Amazon Bedrock generates intelligent recommendations
@@ -19,7 +19,7 @@
 - **Scheduled Execution**: EventBridge weekly automation
 - **Secure by Default**: IMDSv2, HTTPS-only, encrypted S3
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option 1: Docker Deployment (Recommended)
 
@@ -49,7 +49,7 @@ CostMinimizer --configure --auto-update-conf
 CostMinimizer --ce --ta --co
 ```
 
-## 📊 Usage Examples
+## Usage Examples
 
 ```bash
 # Cost Explorer reports
@@ -62,17 +62,17 @@ CostMinimizer -r --ce --ta --co
 CostMinimizer -q "What are my top cost savings opportunities?" -f report.xlsx
 ```
 
-## 🔒 Security
+## Security
 
 | Feature | Status |
 |---------|--------|
-| Container CVEs (Critical/High) | ✅ 0 |
-| Network Egress | ✅ HTTPS only |
-| S3 Encryption | ✅ AES-256 |
-| Instance Metadata | ✅ IMDSv2 |
-| Access Method | ✅ SSM (no SSH) |
+| Container CVEs (Critical/High) | 0 |
+| Network Egress | HTTPS only |
+| S3 Encryption | AES-256 |
+| Instance Metadata | IMDSv2 |
+| Access Method | SSM (no SSH) |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ├── src/CostMinimizer/     # Main source code
@@ -83,7 +83,7 @@ CostMinimizer -q "What are my top cost savings opportunities?" -f report.xlsx
 └── requirements.txt       # Python dependencies
 ```
 
-## 💰 Cost Estimate
+## Cost Estimate
 
 | Resource | Monthly Cost |
 |----------|-------------|
@@ -91,19 +91,19 @@ CostMinimizer -q "What are my top cost savings opportunities?" -f report.xlsx
 | S3 + ECR + Logs | ~$1 |
 | **Total** | **~$31** |
 
-💡 Use Spot Instances to reduce to ~$10/month
+Use Spot Instances to reduce to ~$10/month
 
-## 📖 Documentation
+## Documentation
 
 - [Docker Deployment Guide](README_DOCKER_DEPLOY.md)
 - [MCP Server Setup](MCP_SETUP.md)
 - [Development Guide](DEVELOPMENT.md)
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please read the [contributing guidelines](CONTRIBUTING.md) first.
 
-## 📄 License
+## License
 
 Apache 2.0 - See [LICENSE](LICENSE) for details.
 

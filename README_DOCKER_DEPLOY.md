@@ -34,12 +34,12 @@ aws cloudformation deploy --template-file cloudformation-deploy.yaml \
 
 | Feature | Status |
 |---------|--------|
-| Base image CVEs (Critical/High) | ✅ 0 |
-| Outbound traffic | ✅ HTTPS only |
-| S3 encryption | ✅ AES-256 |
-| Instance metadata | ✅ IMDSv2 |
-| Access method | ✅ SSM (no SSH) |
-| ECR scanning | ✅ Enabled |
+| Base image CVEs (Critical/High) | 0 |
+| Outbound traffic | HTTPS only |
+| S3 encryption | AES-256 |
+| Instance metadata | IMDSv2 |
+| Access method | SSM (no SSH) |
+| ECR scanning | Enabled |
 
 ## Usage
 
@@ -61,4 +61,4 @@ aws s3 sync s3://costminimizer-reports-<ACCOUNT_ID>/ ./reports/
 | S3 + ECR + Logs | ~$1 |
 | **Total** | **~$31** |
 
-💡 Use Spot Instance to reduce to ~$10/month
+Use Spot Instance to reduce to ~$10/month

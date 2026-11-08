@@ -14,13 +14,13 @@
 
 ## Security Hardening Applied
 
-- ✅ Slim base image (python:3.12-slim) - 0 Critical/High CVEs
-- ✅ Outbound HTTPS only (port 443)
-- ✅ S3 encryption (AES-256)
-- ✅ S3 HTTPS enforced
-- ✅ IMDSv2 required
-- ✅ No SSH keys (SSM access only)
-- ✅ ECR image scanning enabled
+- Slim base image (python:3.12-slim) - 0 Critical/High CVEs
+- Outbound HTTPS only (port 443)
+- S3 encryption (AES-256)
+- S3 HTTPS enforced
+- IMDSv2 required
+- No SSH keys (SSM access only)
+- ECR image scanning enabled
 
 ## Usage
 
