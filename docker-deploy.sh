@@ -11,4 +11,4 @@ aws ecr get-login-password --region $REGION | docker login --username AWS --pass
 docker build -f Dockerfile.secure -t costminimizer:secure .
 docker tag costminimizer:secure $ECR_URI:latest
 docker push $ECR_URI:latest
-echo "✅ Image pushed to $ECR_URI:latest"
+echo "Image pushed to $ECR_URI:latest"

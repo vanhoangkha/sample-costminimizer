@@ -12,31 +12,31 @@ echo "Checking AWS credentials..."
 if [ -n "$AWS_ACCESS_KEY_ID" ]; then
     echo "✓ AWS_ACCESS_KEY_ID found"
 else
-    echo "⚠ AWS_ACCESS_KEY_ID not set"
+    echo "AWS_ACCESS_KEY_ID not set"
 fi
 
 if [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
     echo "✓ AWS_SECRET_ACCESS_KEY found"
 else
-    echo "⚠ AWS_SECRET_ACCESS_KEY not set"
+    echo "AWS_SECRET_ACCESS_KEY not set"
 fi
 
 if [ -n "$AWS_SESSION_TOKEN" ]; then
     echo "✓ AWS_SESSION_TOKEN found"
 else
-    echo "⚠ AWS_SESSION_TOKEN not set"
+    echo "AWS_SESSION_TOKEN not set"
 fi
 
 if [ -n "$AWS_DEFAULT_REGION" ]; then
     echo "✓ AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
 else
-    echo "⚠ AWS_DEFAULT_REGION not set"
+    echo "AWS_DEFAULT_REGION not set"
 fi
 
 if [ -n "$AWS_PROFILE" ]; then
     echo "✓ AWS_PROFILE: $AWS_PROFILE"
 else
-    echo "⚠ AWS_PROFILE not set"
+    echo "AWS_PROFILE not set"
 fi
 
 echo
