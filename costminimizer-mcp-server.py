@@ -189,11 +189,11 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 # Return immediate response for async mode
                 return [TextContent(
                     type="text", 
-                    text=f"🚀 Starting cost optimization analysis (async mode)...\n\n"
-                         f"📊 Reports to generate: {', '.join(valid_reports)}\n"
-                         f"🌍 Region: {region}\n\n"
-                         f"⏱️ This may take several minutes. Reports will be saved to your output folder.\n"
-                         f"💡 Use 'ask_cost_question' after completion to analyze results."
+                    text=f"Starting cost optimization analysis (async mode)...\n\n"
+                         f"Reports to generate: {', '.join(valid_reports)}\n"
+                         f"Region: {region}\n\n"
+                         f"This may take several minutes. Reports will be saved to your output folder.\n"
+                         f"Use 'ask_cost_question' after completion to analyze results."
                 )]
             else:
                 # Sync mode - wait for completion
@@ -202,16 +202,16 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 )
             
                 if result["success"]:
-                    response = f"✅ Cost optimization analysis is ongoing !\n\n"
-                    response += f"📊 Reports to generate: {', '.join(result['reports_generated'])}\n"
-                    response += f"📁 Output location: {result['output_folder']}\n\n"
-                    response += "📋 Reports include:\n"
+                    response = f"Cost optimization analysis is ongoing !\n\n"
+                    response += f"Reports to generate: {', '.join(result['reports_generated'])}\n"
+                    response += f"Output location: {result['output_folder']}\n\n"
+                    response += "Reports include:\n"
                     
                     available_reports = tools.get_available_reports()
                     for report in result['reports_generated']:
                         response += f"• {report.upper()}: {available_reports[report]}\n"
                     
-                    response += "\n💡 Next steps:\n"
+                    response += "\nNext steps:\n"
                     response += "• Review the generated Excel reports for detailed recommendations\n"
                     response += "• Use 'ask_cost_question' to get AI insights about specific findings\n"
                     response += "• Implement high-impact, low-effort recommendations first\n"
@@ -220,7 +220,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 else:
                     return [TextContent(
                         type="text", 
-                        text=f"❌ Error generating reports: {result['error']}"
+                        text=f"Error generating reports: {result['error']}"
                     )]
         
         elif name == "ask_cost_question":
@@ -236,15 +236,15 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.ask_question(question, report_file)
             
             if result["success"]:
-                response = f"❓ Question: {result['question']}\n\n"
-                response += f"💬 Answer: {result['answer']}\n"
+                response = f"Question: {result['question']}\n\n"
+                response += f"Answer: {result['answer']}\n"
                 if result.get("report_file"):
-                    response += f"\n📄 Based on report: {result['report_file']}"
+                    response += f"\nBased on report: {result['report_file']}"
                 return [TextContent(type="text", text=response)]
             else:
                 return [TextContent(
                     type="text", 
-                    text=f"❌ Error processing question: {result['error']}"
+                    text=f"Error processing question: {result['error']}"
                 )]
         
         elif name == "get_cost_summary":
@@ -257,30 +257,30 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.get_cost_summary()
             
             if result["success"]:
-                response = f"📈 AWS Cost Summary\n\n"
-                response += f"✅ {result['message']}\n\n"
-                response += "🎯 Key Recommendations:\n"
+                response = f"AWS Cost Summary\n\n"
+                response += f"{result['message']}\n\n"
+                response += "Key Recommendations:\n"
                 for rec in result['recommendations']:
                     response += f"• {rec}\n"
                 
                 if result.get("output_folder"):
-                    response += f"\n📁 Detailed reports saved to: {result['output_folder']}"
+                    response += f"\nDetailed reports saved to: {result['output_folder']}"
                 
                 return [TextContent(type="text", text=response)]
             else:
                 return [TextContent(
                     type="text", 
-                    text=f"❌ Error generating cost summary: {result['error']}"
+                    text=f"Error generating cost summary: {result['error']}"
                 )]
         
         elif name == "list_available_reports":
             available_reports = tools.get_available_reports()
-            response = "📊 Available Cost Optimization Reports:\n\n"
+            response = "Available Cost Optimization Reports:\n\n"
             
             for code, description in available_reports.items():
                 response += f"• **{code.upper()}**: {description}\n"
             
-            response += "\n💡 Usage tip: Use 'get_cost_optimization_recommendations' with the report codes you want to generate."
+            response += "\nUsage tip: Use 'get_cost_optimization_recommendations' with the report codes you want to generate."
             
             return [TextContent(type="text", text=response)]
         
@@ -294,14 +294,14 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.execute_reports(["ce"], region)
             
             if result["success"]:
-                response = f"✅ Cost Explorer analysis is ongoing !\n\n"
-                response += f"📊 Report to generate: CE (Cost Explorer)\n"
-                response += f"📁 Output location: {result['output_folder']}\n\n"
-                response += "📋 Report includes:\n"
+                response = f"Cost Explorer analysis is ongoing !\n\n"
+                response += f"Report to generate: CE (Cost Explorer)\n"
+                response += f"Output location: {result['output_folder']}\n\n"
+                response += "Report includes:\n"
                 response += "• Cost Explorer - Analyze spending patterns, trends, and Reserved Instance utilization\n"
                 return [TextContent(type="text", text=response)]
             else:
-                return [TextContent(type="text", text=f"❌ Error generating CE report: {result['error']}")]
+                return [TextContent(type="text", text=f"Error generating CE report: {result['error']}")]
         
         elif name == "get_cost_optimization_co_recommendations":
             region = arguments.get("region", "us-east-1")
@@ -313,14 +313,14 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.execute_reports(["co"], region)
             
             if result["success"]:
-                response = f"✅ Compute Optimizer analysis is ongoing !\n\n"
-                response += f"📊 Report to generate: CO (Compute Optimizer)\n"
-                response += f"📁 Output location: {result['output_folder']}\n\n"
-                response += "📋 Report includes:\n"
+                response = f"Compute Optimizer analysis is ongoing !\n\n"
+                response += f"Report to generate: CO (Compute Optimizer)\n"
+                response += f"Output location: {result['output_folder']}\n\n"
+                response += "Report includes:\n"
                 response += "• Compute Optimizer - Get rightsizing recommendations for EC2, EBS, Lambda\n"
                 return [TextContent(type="text", text=response)]
             else:
-                return [TextContent(type="text", text=f"❌ Error generating CO report: {result['error']}")]
+                return [TextContent(type="text", text=f"Error generating CO report: {result['error']}")]
         
         elif name == "get_cost_optimization_ta_recommendations":
             region = arguments.get("region", "us-east-1")
@@ -332,14 +332,14 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.execute_reports(["ta"], region)
             
             if result["success"]:
-                response = f"✅ Trusted Advisor analysis is ongoing !\n\n"
-                response += f"📊 Report to generate: TA (Trusted Advisor)\n"
-                response += f"📁 Output location: {result['output_folder']}\n\n"
-                response += "📋 Report includes:\n"
+                response = f"Trusted Advisor analysis is ongoing !\n\n"
+                response += f"Report to generate: TA (Trusted Advisor)\n"
+                response += f"Output location: {result['output_folder']}\n\n"
+                response += "Report includes:\n"
                 response += "• Trusted Advisor - Get AWS best practice recommendations for cost optimization\n"
                 return [TextContent(type="text", text=response)]
             else:
-                return [TextContent(type="text", text=f"❌ Error generating TA report: {result['error']}")]
+                return [TextContent(type="text", text=f"Error generating TA report: {result['error']}")]
         
         elif name == "get_cost_optimization_cur_recommendations":
             region = arguments.get("region", "us-east-1")
@@ -351,21 +351,21 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 result = tools.execute_reports(["cur"], region)
             
             if result["success"]:
-                response = f"✅ Cost & Usage Report analysis is ongoing!\n\n"
-                response += f"📊 Report to generate: CUR (Cost & Usage Report)\n"
-                response += f"📁 Output location: {result['output_folder']}\n\n"
-                response += "📋 Report includes:\n"
+                response = f"Cost & Usage Report analysis is ongoing!\n\n"
+                response += f"Report to generate: CUR (Cost & Usage Report)\n"
+                response += f"Output location: {result['output_folder']}\n\n"
+                response += "Report includes:\n"
                 response += "• Cost & Usage Report - Detailed billing analysis with custom queries\n"
                 return [TextContent(type="text", text=response)]
             else:
-                return [TextContent(type="text", text=f"❌ Error generating CUR report: {result['error']}")]
+                return [TextContent(type="text", text=f"Error generating CUR report: {result['error']}")]
         
         else:
-            return [TextContent(type="text", text=f"❌ Unknown tool: {name}")]
+            return [TextContent(type="text", text=f"Unknown tool: {name}")]
             
     except Exception as e:
         logger.error(f"Error in tool {name}: {str(e)}")
-        return [TextContent(type="text", text=f"❌ Unexpected error: {str(e)}")]
+        return [TextContent(type="text", text=f"Unexpected error: {str(e)}")]
 
 def test_aws_credentials():
     """Test AWS credentials before starting server."""
